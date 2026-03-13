@@ -32,6 +32,10 @@ type Client struct {
 	authHeader   string // pre-computed "Basic base64(:pat)"
 
 	rateLimiter *RateLimiter
+
+	// testBaseURL overrides buildURL to route all requests to a test server.
+	// Only set by NewTestClient; zero value means production behavior.
+	testBaseURL string
 }
 
 // RateLimiter implements a token bucket rate limiter.
@@ -104,9 +108,17 @@ func (c *Client) Organization() string {
 
 // buildURL constructs the full API URL for a given host, optional project, path, and query params.
 // The api-version query parameter is always appended.
+// When testBaseURL is set (test mode), all requests route to the test server.
 func (c *Client) buildURL(host, project, path string, query url.Values) string {
 	var base string
-	if project != "" {
+	if c.testBaseURL != "" {
+		// Test mode: route everything to the httptest server
+		if project != "" {
+			base = fmt.Sprintf("%s/%s/%s/_apis%s", c.testBaseURL, c.organization, project, path)
+		} else {
+			base = fmt.Sprintf("%s/%s/_apis%s", c.testBaseURL, c.organization, path)
+		}
+	} else if project != "" {
 		base = fmt.Sprintf("https://%s/%s/%s/_apis%s", host, c.organization, project, path)
 	} else {
 		base = fmt.Sprintf("https://%s/%s/_apis%s", host, c.organization, path)
@@ -327,6 +339,23 @@ func GetJSON[T any](c *Client, project, path string, query url.Values) (*T, erro
 // Useful for pagination continuation URLs or download links.
 func (c *Client) GetAbsolute(absoluteURL string) (*http.Response, error) {
 	return c.do(http.MethodGet, absoluteURL, nil, "")
+}
+
+// unmarshalJSON is a helper that unmarshals JSON data into a value.
+func unmarshalJSON(data []byte, v interface{}) error {
+	if err := json.Unmarshal(data, v); err != nil {
+		return fmt.Errorf("unmarshaling response: %w", err)
+	}
+	return nil
+}
+
+// readBody reads and returns the full response body.
+func readBody(resp *http.Response) ([]byte, error) {
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+	return data, nil
 }
 
 func parseAPIError(statusCode int, body []byte) error {

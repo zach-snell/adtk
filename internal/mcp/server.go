@@ -48,6 +48,16 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 
 	enableWrites := os.Getenv("ADTK_ENABLE_WRITES") == "true"
 
+	// ─── Work Items ─────────────────────────────────────────────────
+	workItemActions := "'get', 'batch_get', 'list_types', 'get_links', 'get_history', 'list_comments'"
+	if enableWrites {
+		workItemActions += ", 'create', 'update', 'delete', 'add_comment'"
+	}
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_work_items",
+		Description: "Manage Azure DevOps work items (tasks, bugs, user stories, epics). Actions: " + workItemActions,
+	}, ManageWorkItemsHandler(c, enableWrites))
+
 	// ─── Projects ────────────────────────────────────────────────────
 	projectActions := "'list', 'get', 'list_teams', 'get_team'"
 	if enableWrites {
@@ -63,4 +73,58 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 		Name:        "manage_users",
 		Description: "Search and get Azure DevOps users. Actions: 'get_current', 'search'",
 	}, ManageUsersHandler(c))
+
+	// ─── Search ─────────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_search",
+		Description: "Search Azure DevOps using WIQL, code search, work item search, or wiki search. Actions: 'wiql', 'code', 'work_items', 'wiki'",
+	}, ManageSearchHandler(c))
+
+	// ─── Repositories ───────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_repos",
+		Description: "Manage Azure DevOps Git repositories. Actions: 'list', 'get', 'list_branches', 'get_file', 'get_tree'",
+	}, ManageReposHandler(c))
+
+	// ─── Pull Requests ──────────────────────────────────────────────
+	prActions := "'list', 'get', 'list_comments', 'list_reviewers'"
+	if enableWrites {
+		prActions += ", 'create', 'update', 'add_comment', 'vote'"
+	}
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_pull_requests",
+		Description: "Manage Azure DevOps pull requests. Actions: " + prActions,
+	}, ManagePullRequestsHandler(c, enableWrites))
+
+	// ─── Iterations ─────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_iterations",
+		Description: "Manage Azure DevOps iterations (sprints). Actions: 'list', 'get', 'get_current'",
+	}, ManageIterationsHandler(c))
+
+	// ─── Boards ─────────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_boards",
+		Description: "Manage Azure DevOps Kanban boards. Actions: 'list', 'get', 'get_columns'",
+	}, ManageBoardsHandler(c))
+
+	// ─── Wiki ───────────────────────────────────────────────────────
+	wikiActions := "'list', 'get_page'"
+	if enableWrites {
+		wikiActions += ", 'create_page', 'update_page', 'delete_page'"
+	}
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_wiki",
+		Description: "Manage Azure DevOps wiki pages (markdown-native). Actions: " + wikiActions,
+	}, ManageWikiHandler(c, enableWrites))
+
+	// ─── Pipelines ──────────────────────────────────────────────────
+	pipelineActions := "'list', 'get', 'list_runs', 'get_run', 'get_logs', 'get_log'"
+	if enableWrites {
+		pipelineActions += ", 'trigger'"
+	}
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_pipelines",
+		Description: "Manage Azure DevOps CI/CD pipelines. Actions: " + pipelineActions,
+	}, ManagePipelinesHandler(c, enableWrites))
 }
