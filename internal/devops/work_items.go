@@ -150,16 +150,26 @@ func (c *Client) WIQLAndFetch(project, query string, fields []string, top int) (
 }
 
 // GetWorkItemComments retrieves comments for a work item.
+// The comments API requires the -preview suffix on api-version.
 func (c *Client) GetWorkItemComments(project string, id int) (*WorkItemCommentList, error) {
 	path := fmt.Sprintf("/wit/workitems/%d/comments", id)
-	return GetJSON[WorkItemCommentList](c, project, path, nil)
+	data, err := c.GetPreview(project, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting comments: %w", err)
+	}
+	var result WorkItemCommentList
+	if err := unmarshalJSON(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 // AddWorkItemComment adds a comment to a work item.
+// The comments API requires the -preview suffix on api-version.
 func (c *Client) AddWorkItemComment(project string, id int, text string) (*WorkItemComment, error) {
 	path := fmt.Sprintf("/wit/workitems/%d/comments", id)
 	body := map[string]string{"text": text}
-	data, err := c.Post(project, path, body)
+	data, err := c.PostPreview(project, path, body)
 	if err != nil {
 		return nil, fmt.Errorf("adding comment: %w", err)
 	}

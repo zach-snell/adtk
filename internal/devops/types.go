@@ -1,6 +1,52 @@
 package devops
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
+
+// ADOTime handles Azure DevOps time fields that may lack timezone suffixes.
+// ADO sometimes returns "0001-01-01T00:00:00" (no "Z") for unset dates.
+type ADOTime struct {
+	time.Time
+}
+
+// UnmarshalJSON handles both "2006-01-02T15:04:05Z" and "0001-01-01T00:00:00" formats.
+func (t *ADOTime) UnmarshalJSON(data []byte) error {
+	s := strings.Trim(string(data), "\"")
+	if s == "" || s == "null" {
+		t.Time = time.Time{}
+		return nil
+	}
+	// Try standard RFC3339 first
+	parsed, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		t.Time = parsed
+		return nil
+	}
+	// Try without timezone (ADO sometimes omits Z on zero dates)
+	parsed, err = time.Parse("2006-01-02T15:04:05", s)
+	if err == nil {
+		t.Time = parsed
+		return nil
+	}
+	// Try with fractional seconds
+	parsed, err = time.Parse("2006-01-02T15:04:05.9999999Z", s)
+	if err == nil {
+		t.Time = parsed
+		return nil
+	}
+	return fmt.Errorf("cannot parse ADO time %q", s)
+}
+
+// MarshalJSON outputs in RFC3339 format.
+func (t ADOTime) MarshalJSON() ([]byte, error) {
+	if t.Time.IsZero() {
+		return []byte("null"), nil
+	}
+	return []byte(`"` + t.Time.Format(time.RFC3339) + `"`), nil
+}
 
 // --- Work Items ---
 
@@ -107,14 +153,14 @@ type IdentityList struct {
 
 // Project represents an Azure DevOps project.
 type Project struct {
-	ID             string    `json:"id"`
-	Name           string    `json:"name"`
-	Description    string    `json:"description,omitempty"`
-	URL            string    `json:"url"`
-	State          string    `json:"state"`
-	Revision       int       `json:"revision"`
-	Visibility     string    `json:"visibility"`
-	LastUpdateTime time.Time `json:"lastUpdateTime"`
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	Description    string  `json:"description,omitempty"`
+	URL            string  `json:"url"`
+	State          string  `json:"state"`
+	Revision       int     `json:"revision"`
+	Visibility     string  `json:"visibility"`
+	LastUpdateTime ADOTime `json:"lastUpdateTime"`
 }
 
 // ProjectList is the response for listing projects.
@@ -198,8 +244,8 @@ type PullRequest struct {
 	Description   string        `json:"description,omitempty"`
 	Status        string        `json:"status"`
 	CreatedBy     Identity      `json:"createdBy"`
-	CreationDate  time.Time     `json:"creationDate"`
-	ClosedDate    time.Time     `json:"closedDate,omitempty"`
+	CreationDate  ADOTime       `json:"creationDate"`
+	ClosedDate    ADOTime       `json:"closedDate,omitempty"`
 	SourceRefName string        `json:"sourceRefName"`
 	TargetRefName string        `json:"targetRefName"`
 	MergeStatus   string        `json:"mergeStatus,omitempty"`
@@ -347,14 +393,14 @@ type PipelineList struct {
 
 // PipelineRun represents a pipeline run.
 type PipelineRun struct {
-	ID           int       `json:"id"`
-	Name         string    `json:"name"`
-	State        string    `json:"state"`
-	Result       string    `json:"result,omitempty"`
-	CreatedDate  time.Time `json:"createdDate"`
-	FinishedDate time.Time `json:"finishedDate,omitempty"`
-	URL          string    `json:"url"`
-	Pipeline     Pipeline  `json:"pipeline"`
+	ID           int      `json:"id"`
+	Name         string   `json:"name"`
+	State        string   `json:"state"`
+	Result       string   `json:"result,omitempty"`
+	CreatedDate  ADOTime  `json:"createdDate"`
+	FinishedDate ADOTime  `json:"finishedDate,omitempty"`
+	URL          string   `json:"url"`
+	Pipeline     Pipeline `json:"pipeline"`
 }
 
 // PipelineRunList is the response for listing pipeline runs.

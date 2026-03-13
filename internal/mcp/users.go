@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -33,9 +34,13 @@ func ManageUsersHandler(c *devops.Client) func(context.Context, *sdkmcp.CallTool
 }
 
 func handleGetCurrentUser(c *devops.Client) (*sdkmcp.CallToolResult, any, error) {
-	result, err := devops.GetJSON[devops.ConnectionData](c, "", "/connectionData", nil)
+	data, err := c.GetPreview("", "/connectionData", nil)
 	if err != nil {
 		return resultError(fmt.Sprintf("getting current user: %v", err))
+	}
+	var result devops.ConnectionData
+	if err := json.Unmarshal(data, &result); err != nil {
+		return resultError(fmt.Sprintf("parsing current user: %v", err))
 	}
 	return resultJSON(result.AuthenticatedUser)
 }

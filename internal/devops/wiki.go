@@ -63,37 +63,30 @@ func (c *Client) CreateWikiPage(project, wikiID, pagePath, content string) (*Wik
 }
 
 // UpdateWikiPage updates an existing wiki page content.
-// Requires the ETag (version) of the current page for optimistic concurrency.
-func (c *Client) UpdateWikiPage(project, wikiID, pagePath, content string, version int) (*WikiPage, error) {
-	path := fmt.Sprintf("/wiki/wikis/%s/pages", wikiID)
+// Automatically fetches the current ETag for optimistic concurrency.
+func (c *Client) UpdateWikiPage(project, wikiID, pagePath, content string, _ int) (*WikiPage, error) {
+	apiPath := fmt.Sprintf("/wiki/wikis/%s/pages", wikiID)
 	query := url.Values{}
 	query.Set("path", pagePath)
 
-	requestURL := c.buildURL(HostMain, project, path, query)
-	body := map[string]string{"content": content}
-	bodyBytes, err := json.Marshal(body)
+	// First GET the page to retrieve its ETag (git SHA).
+	_, etag, err := c.GetWithETag(project, apiPath, query)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling wiki page: %w", err)
+		return nil, fmt.Errorf("getting wiki page ETag: %w", err)
+	}
+	if etag == "" {
+		return nil, fmt.Errorf("wiki page ETag not found; page may not exist at path %q", pagePath)
 	}
 
-	resp, err := c.do("PUT", requestURL, bodyBytes, "application/json")
+	body := map[string]string{"content": content}
+	data, err := c.PutWithETag(project, apiPath, query, body, etag)
 	if err != nil {
 		return nil, fmt.Errorf("updating wiki page: %w", err)
 	}
-	defer resp.Body.Close()
-
-	data, err := readBody(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, parseAPIError(resp.StatusCode, data)
-	}
 
 	var result WikiPage
-	if err := json.Unmarshal(data, &result); err != nil {
-		return nil, fmt.Errorf("unmarshaling wiki page: %w", err)
+	if err := unmarshalJSON(data, &result); err != nil {
+		return nil, err
 	}
 	return &result, nil
 }

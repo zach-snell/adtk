@@ -128,6 +128,7 @@ func (c *Client) buildURL(host, project, path string, query url.Values) string {
 		query = url.Values{}
 	}
 	if query.Get("api-version") == "" {
+		// Some APIs require -preview suffix; callers set it explicitly.
 		query.Set("api-version", DefaultAPIVersion)
 	}
 
@@ -169,9 +170,28 @@ func (c *Client) Get(project, path string, query url.Values) ([]byte, error) {
 	return c.getFrom(HostMain, project, path, query)
 }
 
+// GetPreview performs a GET request with a preview API version.
+// Some ADO endpoints (e.g. connectionData, graph, comments) require the -preview suffix.
+func (c *Client) GetPreview(project, path string, query url.Values) ([]byte, error) {
+	if query == nil {
+		query = url.Values{}
+	}
+	query.Set("api-version", DefaultAPIVersion+"-preview")
+	return c.getFrom(HostMain, project, path, query)
+}
+
 // GetIdentity performs a GET request to the identity API (vssps.dev.azure.com).
 func (c *Client) GetIdentity(path string, query url.Values) ([]byte, error) {
+	if query == nil {
+		query = url.Values{}
+	}
+	query.Set("api-version", DefaultAPIVersion+"-preview")
 	return c.getFrom(HostIdentity, "", path, query)
+}
+
+// PostPreview performs a POST request with a preview API version.
+func (c *Client) PostPreview(project, path string, body interface{}) ([]byte, error) {
+	return c.postToWithVersion(HostMain, project, path, body, "application/json", DefaultAPIVersion+"-preview")
 }
 
 // GetSearch performs a POST request to the search API (almsearch.dev.azure.com).
@@ -205,6 +225,10 @@ func (c *Client) Post(project, path string, body interface{}) ([]byte, error) {
 }
 
 func (c *Client) postTo(host, project, path string, body interface{}, contentType string) ([]byte, error) {
+	return c.postToWithVersion(host, project, path, body, contentType, "")
+}
+
+func (c *Client) postToWithVersion(host, project, path string, body interface{}, contentType, apiVersion string) ([]byte, error) {
 	var bodyData []byte
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -214,7 +238,13 @@ func (c *Client) postTo(host, project, path string, body interface{}, contentTyp
 		bodyData = b
 	}
 
-	requestURL := c.buildURL(host, project, path, nil)
+	var query url.Values
+	if apiVersion != "" {
+		query = url.Values{}
+		query.Set("api-version", apiVersion)
+	}
+
+	requestURL := c.buildURL(host, project, path, query)
 	resp, err := c.do(http.MethodPost, requestURL, bodyData, contentType)
 	if err != nil {
 		return nil, err
@@ -271,6 +301,78 @@ func (c *Client) patchWith(project, path string, body interface{}, contentType s
 	}
 
 	return respData, nil
+}
+
+// PutWithETag performs a PUT request with an If-Match header for optimistic concurrency.
+// Used by wiki page updates which require the ETag (git SHA).
+func (c *Client) PutWithETag(project, path string, query url.Values, body interface{}, etag string) ([]byte, error) {
+	var bodyData []byte
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling body: %w", err)
+		}
+		bodyData = b
+	}
+
+	requestURL := c.buildURL(HostMain, project, path, query)
+
+	if !c.rateLimiter.Allow() {
+		return nil, fmt.Errorf("rate limit exceeded: please wait and retry")
+	}
+
+	var bodyReader io.Reader
+	if bodyData != nil {
+		bodyReader = bytes.NewReader(bodyData)
+	}
+
+	req, err := http.NewRequest(http.MethodPut, requestURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	req.Header.Set("Authorization", c.authHeader)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("If-Match", etag)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(respData))
+	}
+
+	return respData, nil
+}
+
+// GetWithETag performs a GET and returns both the body and the ETag header.
+func (c *Client) GetWithETag(project, path string, query url.Values) (data []byte, etag string, err error) {
+	requestURL := c.buildURL(HostMain, project, path, query)
+	resp, err := c.do(http.MethodGet, requestURL, nil, "")
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	data, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return nil, "", fmt.Errorf("reading response: %w", readErr)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, "", parseAPIError(resp.StatusCode, data)
+	}
+
+	etag = resp.Header.Get("ETag")
+	return data, etag, nil
 }
 
 // Put performs a PUT request with a JSON body.
