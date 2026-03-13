@@ -10,28 +10,28 @@ import (
 
 // ManagePullRequestsInput defines the input schema for the manage_pull_requests tool.
 type ManagePullRequestsInput struct {
-	Action     string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'create'\\, 'update'\\, 'add_comment'\\, 'list_comments'\\, 'vote'\\, 'list_reviewers'"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"description=Project name"`
-	RepoID     string `json:"repo_id,omitempty" jsonschema:"description=Repository name or ID (required for most actions)"`
-	PRID       int    `json:"pr_id,omitempty" jsonschema:"description=Pull request ID (required for get\\, update\\, add_comment\\, list_comments\\, vote\\, list_reviewers)"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'create', 'update', 'add_comment', 'list_comments', 'vote', 'list_reviewers'"`
+	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name"`
+	RepoID     string `json:"repo_id,omitempty" jsonschema:"Repository name or ID (required for most actions)"`
+	PRID       int    `json:"pr_id,omitempty" jsonschema:"Pull request ID (required for get, update, add_comment, list_comments, vote, list_reviewers)"`
 
 	// List filters
-	Status string `json:"status,omitempty" jsonschema:"description=Filter by status: active\\, completed\\, abandoned\\, all (for list)"`
-	Top    int    `json:"top,omitempty" jsonschema:"description=Max results to return"`
+	Status string `json:"status,omitempty" jsonschema:"Filter by status: active, completed, abandoned, all (for list)"`
+	Top    int    `json:"top,omitempty" jsonschema:"Max results to return"`
 
 	// Create fields
-	Title        string `json:"title,omitempty" jsonschema:"description=PR title (required for create)"`
-	Description  string `json:"description,omitempty" jsonschema:"description=PR description (for create\\, update)"`
-	SourceBranch string `json:"source_branch,omitempty" jsonschema:"description=Source branch name (required for create)"`
-	TargetBranch string `json:"target_branch,omitempty" jsonschema:"description=Target branch name (required for create)"`
-	IsDraft      bool   `json:"is_draft,omitempty" jsonschema:"description=Create as draft PR (for create)"`
+	Title        string `json:"title,omitempty" jsonschema:"PR title (required for create)"`
+	Description  string `json:"description,omitempty" jsonschema:"PR description (for create, update)"`
+	SourceBranch string `json:"source_branch,omitempty" jsonschema:"Source branch name (required for create)"`
+	TargetBranch string `json:"target_branch,omitempty" jsonschema:"Target branch name (required for create)"`
+	IsDraft      bool   `json:"is_draft,omitempty" jsonschema:"Create as draft PR (for create)"`
 
 	// Comment
-	Comment string `json:"comment,omitempty" jsonschema:"description=Comment content (for add_comment)"`
+	Comment string `json:"comment,omitempty" jsonschema:"Comment content (for add_comment)"`
 
 	// Vote
-	ReviewerID string `json:"reviewer_id,omitempty" jsonschema:"description=Reviewer ID (for vote)"`
-	Vote       int    `json:"vote,omitempty" jsonschema:"description=Vote: 10=approved\\, 5=approved with suggestions\\, 0=no vote\\, -5=waiting\\, -10=rejected"`
+	ReviewerID string `json:"reviewer_id,omitempty" jsonschema:"Reviewer ID (for vote)"`
+	Vote       int    `json:"vote,omitempty" jsonschema:"Vote: 10=approved, 5=approved with suggestions, 0=no vote, -5=waiting, -10=rejected"`
 }
 
 // ManagePullRequestsHandler returns the handler for the manage_pull_requests tool.

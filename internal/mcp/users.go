@@ -11,8 +11,8 @@ import (
 
 // ManageUsersInput defines the input schema for the manage_users tool.
 type ManageUsersInput struct {
-	Action string `json:"action" jsonschema:"required,description=Action to perform: 'get_current'\\, 'search'"`
-	Query  string `json:"query,omitempty" jsonschema:"description=Search query - display name or email (for search)"`
+	Action string `json:"action" jsonschema:"Action to perform: 'get_current', 'search'"`
+	Query  string `json:"query,omitempty" jsonschema:"Search query - display name or email (for search)"`
 }
 
 // ManageUsersHandler returns the handler for the manage_users tool.

@@ -10,11 +10,11 @@ import (
 
 // ManageSearchInput defines the input schema for the manage_search tool.
 type ManageSearchInput struct {
-	Action     string   `json:"action" jsonschema:"required,description=Action to perform: 'wiql'\\, 'code'\\, 'work_items'\\, 'wiki'"`
-	ProjectKey string   `json:"project_key,omitempty" jsonschema:"description=Project name (optional\\, scopes search)"`
-	Query      string   `json:"query,omitempty" jsonschema:"description=WIQL query string (for wiql action) or search text (for code\\, work_items\\, wiki)"`
-	Top        int      `json:"top,omitempty" jsonschema:"description=Max results to return (default 25)"`
-	Fields     []string `json:"fields,omitempty" jsonschema:"description=Fields to return for WIQL results"`
+	Action     string   `json:"action" jsonschema:"Action to perform: 'wiql', 'code', 'work_items', 'wiki'"`
+	ProjectKey string   `json:"project_key,omitempty" jsonschema:"Project name (optional, scopes search)"`
+	Query      string   `json:"query,omitempty" jsonschema:"WIQL query string (for wiql action) or search text (for code, work_items, wiki)"`
+	Top        int      `json:"top,omitempty" jsonschema:"Max results to return (default 25)"`
+	Fields     []string `json:"fields,omitempty" jsonschema:"Fields to return for WIQL results"`
 }
 
 // ManageSearchHandler returns the handler for the manage_search tool.

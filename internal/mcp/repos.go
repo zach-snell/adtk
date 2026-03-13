@@ -10,11 +10,11 @@ import (
 
 // ManageReposInput defines the input schema for the manage_repos tool.
 type ManageReposInput struct {
-	Action     string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'list_branches'\\, 'get_file'\\, 'get_tree'"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"description=Project name (required for most actions)"`
-	RepoID     string `json:"repo_id,omitempty" jsonschema:"description=Repository name or ID (required for get\\, list_branches\\, get_file\\, get_tree)"`
-	FilePath   string `json:"file_path,omitempty" jsonschema:"description=File path within the repo (for get_file\\, get_tree)"`
-	Version    string `json:"version,omitempty" jsonschema:"description=Branch name or commit SHA (for get_file)"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_branches', 'get_file', 'get_tree'"`
+	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required for most actions)"`
+	RepoID     string `json:"repo_id,omitempty" jsonschema:"Repository name or ID (required for get, list_branches, get_file, get_tree)"`
+	FilePath   string `json:"file_path,omitempty" jsonschema:"File path within the repo (for get_file, get_tree)"`
+	Version    string `json:"version,omitempty" jsonschema:"Branch name or commit SHA (for get_file)"`
 }
 
 // ManageReposHandler returns the handler for the manage_repos tool.

@@ -127,4 +127,14 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 		Name:        "manage_pipelines",
 		Description: "Manage Azure DevOps CI/CD pipelines. Actions: " + pipelineActions,
 	}, ManagePipelinesHandler(c, enableWrites))
+
+	// ─── Attachments ────────────────────────────────────────────────
+	attachmentActions := "'list', 'download'"
+	if enableWrites {
+		attachmentActions += ", 'upload'"
+	}
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_attachments",
+		Description: "Manage Azure DevOps work item attachments. Actions: " + attachmentActions,
+	}, ManageAttachmentsHandler(c, enableWrites))
 }

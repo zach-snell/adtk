@@ -10,12 +10,12 @@ import (
 
 // ManageWikiInput defines the input schema for the manage_wiki tool.
 type ManageWikiInput struct {
-	Action     string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get_page'\\, 'create_page'\\, 'update_page'\\, 'delete_page'"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"description=Project name (required)"`
-	WikiID     string `json:"wiki_id,omitempty" jsonschema:"description=Wiki name or ID (required for page operations)"`
-	PagePath   string `json:"page_path,omitempty" jsonschema:"description=Wiki page path e.g. /Home or /Design/Architecture (required for page operations)"`
-	Content    string `json:"content,omitempty" jsonschema:"description=Page content in Markdown (for create_page\\, update_page). Wiki is markdown-native."`
-	Version    int    `json:"version,omitempty" jsonschema:"description=Page version for optimistic concurrency (for update_page)"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get_page', 'create_page', 'update_page', 'delete_page'"`
+	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
+	WikiID     string `json:"wiki_id,omitempty" jsonschema:"Wiki name or ID (required for page operations)"`
+	PagePath   string `json:"page_path,omitempty" jsonschema:"Wiki page path e.g. /Home or /Design/Architecture (required for page operations)"`
+	Content    string `json:"content,omitempty" jsonschema:"Page content in Markdown (for create_page, update_page). Wiki is markdown-native."`
+	Version    int    `json:"version,omitempty" jsonschema:"Page version for optimistic concurrency (for update_page)"`
 }
 
 // ManageWikiHandler returns the handler for the manage_wiki tool.

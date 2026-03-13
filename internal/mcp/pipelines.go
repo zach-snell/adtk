@@ -10,13 +10,13 @@ import (
 
 // ManagePipelinesInput defines the input schema for the manage_pipelines tool.
 type ManagePipelinesInput struct {
-	Action     string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'list_runs'\\, 'get_run'\\, 'trigger'\\, 'get_logs'\\, 'get_log'"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"description=Project name (required)"`
-	PipelineID int    `json:"pipeline_id,omitempty" jsonschema:"description=Pipeline ID (required for get\\, list_runs\\, trigger\\, get_logs\\, get_log)"`
-	RunID      int    `json:"run_id,omitempty" jsonschema:"description=Run ID (required for get_run\\, get_logs\\, get_log)"`
-	LogID      int    `json:"log_id,omitempty" jsonschema:"description=Log ID (required for get_log)"`
-	Branch     string `json:"branch,omitempty" jsonschema:"description=Branch name to run pipeline on (for trigger)"`
-	Top        int    `json:"top,omitempty" jsonschema:"description=Max results to return"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_runs', 'get_run', 'trigger', 'get_logs', 'get_log'"`
+	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
+	PipelineID int    `json:"pipeline_id,omitempty" jsonschema:"Pipeline ID (required for get, list_runs, trigger, get_logs, get_log)"`
+	RunID      int    `json:"run_id,omitempty" jsonschema:"Run ID (required for get_run, get_logs, get_log)"`
+	LogID      int    `json:"log_id,omitempty" jsonschema:"Log ID (required for get_log)"`
+	Branch     string `json:"branch,omitempty" jsonschema:"Branch name to run pipeline on (for trigger)"`
+	Top        int    `json:"top,omitempty" jsonschema:"Max results to return"`
 }
 
 // ManagePipelinesHandler returns the handler for the manage_pipelines tool.

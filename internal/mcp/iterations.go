@@ -10,10 +10,10 @@ import (
 
 // ManageIterationsInput defines the input schema for the manage_iterations tool.
 type ManageIterationsInput struct {
-	Action      string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'get_current'"`
-	ProjectKey  string `json:"project_key,omitempty" jsonschema:"description=Project name (required)"`
-	Team        string `json:"team,omitempty" jsonschema:"description=Team name (optional\\, scopes to a specific team)"`
-	IterationID string `json:"iteration_id,omitempty" jsonschema:"description=Iteration ID (required for get)"`
+	Action      string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'get_current'"`
+	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
+	Team        string `json:"team,omitempty" jsonschema:"Team name (optional, scopes to a specific team)"`
+	IterationID string `json:"iteration_id,omitempty" jsonschema:"Iteration ID (required for get)"`
 }
 
 // ManageIterationsHandler returns the handler for the manage_iterations tool.

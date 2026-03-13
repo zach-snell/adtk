@@ -11,30 +11,30 @@ import (
 
 // ManageWorkItemsInput defines the input schema for the manage_work_items tool.
 type ManageWorkItemsInput struct {
-	Action      string `json:"action" jsonschema:"required,description=Action to perform: 'get'\\, 'create'\\, 'update'\\, 'delete'\\, 'add_comment'\\, 'list_comments'\\, 'get_links'\\, 'list_types'\\, 'get_history'\\, 'batch_get'"`
-	ProjectKey  string `json:"project_key,omitempty" jsonschema:"description=Project name (required for most actions)"`
-	WorkItemID  int    `json:"work_item_id,omitempty" jsonschema:"description=Work item ID (required for get\\, update\\, delete\\, add_comment\\, list_comments\\, get_links\\, get_history)"`
-	WorkItemIDs []int  `json:"work_item_ids,omitempty" jsonschema:"description=Work item IDs (for batch_get\\, max 200)"`
+	Action      string `json:"action" jsonschema:"Action to perform: 'get', 'create', 'update', 'delete', 'add_comment', 'list_comments', 'get_links', 'list_types', 'get_history', 'batch_get'"`
+	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project name (required for most actions)"`
+	WorkItemID  int    `json:"work_item_id,omitempty" jsonschema:"Work item ID (required for get, update, delete, add_comment, list_comments, get_links, get_history)"`
+	WorkItemIDs []int  `json:"work_item_ids,omitempty" jsonschema:"Work item IDs (for batch_get, max 200)"`
 
 	// Create/update fields
-	WorkItemType  string `json:"work_item_type,omitempty" jsonschema:"description=Work item type: Task\\, Bug\\, User Story\\, Epic\\, Feature\\, Issue (required for create)"`
-	Title         string `json:"title,omitempty" jsonschema:"description=Work item title (required for create)"`
-	Description   string `json:"description,omitempty" jsonschema:"description=Work item description in HTML (for create\\, update)"`
-	State         string `json:"state,omitempty" jsonschema:"description=Work item state: New\\, Active\\, Closed\\, etc. (for update)"`
-	AssignedTo    string `json:"assigned_to,omitempty" jsonschema:"description=Assignee display name or email (for create\\, update)"`
-	AreaPath      string `json:"area_path,omitempty" jsonschema:"description=Area path e.g. Project\\\\Team (for create\\, update)"`
-	IterationPath string `json:"iteration_path,omitempty" jsonschema:"description=Iteration path e.g. Project\\\\Sprint 1 (for create\\, update)"`
-	Priority      int    `json:"priority,omitempty" jsonschema:"description=Priority: 1=Critical\\, 2=High\\, 3=Medium\\, 4=Low (for create\\, update)"`
-	ParentID      int    `json:"parent_id,omitempty" jsonschema:"description=Parent work item ID to link (for create)"`
-	Tags          string `json:"tags,omitempty" jsonschema:"description=Semicolon-separated tags (for create\\, update)"`
+	WorkItemType  string `json:"work_item_type,omitempty" jsonschema:"Work item type: Task, Bug, User Story, Epic, Feature, Issue (required for create)"`
+	Title         string `json:"title,omitempty" jsonschema:"Work item title (required for create)"`
+	Description   string `json:"description,omitempty" jsonschema:"Work item description in HTML (for create, update)"`
+	State         string `json:"state,omitempty" jsonschema:"Work item state: New, Active, Closed, etc. (for update)"`
+	AssignedTo    string `json:"assigned_to,omitempty" jsonschema:"Assignee display name or email (for create, update)"`
+	AreaPath      string `json:"area_path,omitempty" jsonschema:"Area path e.g. Project\\Team (for create, update)"`
+	IterationPath string `json:"iteration_path,omitempty" jsonschema:"Iteration path e.g. Project\\Sprint 1 (for create, update)"`
+	Priority      int    `json:"priority,omitempty" jsonschema:"Priority: 1=Critical, 2=High, 3=Medium, 4=Low (for create, update)"`
+	ParentID      int    `json:"parent_id,omitempty" jsonschema:"Parent work item ID to link (for create)"`
+	Tags          string `json:"tags,omitempty" jsonschema:"Semicolon-separated tags (for create, update)"`
 
 	// Comment
-	Comment string `json:"comment,omitempty" jsonschema:"description=Comment text in HTML (for add_comment)"`
+	Comment string `json:"comment,omitempty" jsonschema:"Comment text in HTML (for add_comment)"`
 
 	// WIQL query
-	Query  string   `json:"query,omitempty" jsonschema:"description=WIQL query string (for 'list' action via WIQL)"`
-	Fields []string `json:"fields,omitempty" jsonschema:"description=Fields to return (for batch_get). Default: System.Title\\, System.State\\, System.AssignedTo"`
-	Top    int      `json:"top,omitempty" jsonschema:"description=Max results to return (for WIQL queries)"`
+	Query  string   `json:"query,omitempty" jsonschema:"WIQL query string (for 'list' action via WIQL)"`
+	Fields []string `json:"fields,omitempty" jsonschema:"Fields to return (for batch_get). Default: System.Title, System.State, System.AssignedTo"`
+	Top    int      `json:"top,omitempty" jsonschema:"Max results to return (for WIQL queries)"`
 }
 
 // ManageWorkItemsHandler returns the handler for the manage_work_items tool.

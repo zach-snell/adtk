@@ -10,10 +10,10 @@ import (
 
 // ManageBoardsInput defines the input schema for the manage_boards tool.
 type ManageBoardsInput struct {
-	Action     string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'get_columns'"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"description=Project name (required)"`
-	Team       string `json:"team,omitempty" jsonschema:"description=Team name (optional\\, scopes to a specific team)"`
-	BoardID    string `json:"board_id,omitempty" jsonschema:"description=Board name or ID (required for get\\, get_columns)"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'get_columns'"`
+	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
+	Team       string `json:"team,omitempty" jsonschema:"Team name (optional, scopes to a specific team)"`
+	BoardID    string `json:"board_id,omitempty" jsonschema:"Board name or ID (required for get, get_columns)"`
 }
 
 // ManageBoardsHandler returns the handler for the manage_boards tool.

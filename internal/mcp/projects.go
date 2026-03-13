@@ -10,11 +10,11 @@ import (
 
 // ManageProjectsInput defines the input schema for the manage_projects tool.
 type ManageProjectsInput struct {
-	Action      string `json:"action" jsonschema:"required,description=Action to perform: 'list'\\, 'get'\\, 'list_teams'\\, 'get_team'\\, 'create'"`
-	ProjectKey  string `json:"project_key,omitempty" jsonschema:"description=Project name or ID (required for get\\, list_teams)"`
-	TeamID      string `json:"team_id,omitempty" jsonschema:"description=Team name or ID (required for get_team)"`
-	Name        string `json:"name,omitempty" jsonschema:"description=Project name (required for create)"`
-	Description string `json:"description,omitempty" jsonschema:"description=Project description (for create)"`
+	Action      string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_teams', 'get_team', 'create'"`
+	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project name or ID (required for get, list_teams)"`
+	TeamID      string `json:"team_id,omitempty" jsonschema:"Team name or ID (required for get_team)"`
+	Name        string `json:"name,omitempty" jsonschema:"Project name (required for create)"`
+	Description string `json:"description,omitempty" jsonschema:"Project description (for create)"`
 }
 
 // ManageProjectsHandler returns the handler for the manage_projects tool.
