@@ -93,14 +93,3 @@ func muxHandler(routes map[string]http.HandlerFunc) http.Handler {
 		_, _ = w.Write([]byte(`{"message":"no route matched"}`))
 	})
 }
-
-// methodMux routes by HTTP method within a single path.
-func methodMux(methods map[string]http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if handler, ok := methods[r.Method]; ok {
-			handler(w, r)
-			return
-		}
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}

@@ -6,7 +6,7 @@ import (
 
 // ListIterations lists all iterations (sprints) for a project/team.
 func (c *Client) ListIterations(project, team string) ([]Iteration, error) {
-	path := fmt.Sprintf("/work/teamsettings/iterations")
+	path := "/work/teamsettings/iterations"
 	var data []byte
 	var err error
 

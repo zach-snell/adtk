@@ -111,16 +111,16 @@ func (c *Client) Organization() string {
 // When testBaseURL is set (test mode), all requests route to the test server.
 func (c *Client) buildURL(host, project, path string, query url.Values) string {
 	var base string
-	if c.testBaseURL != "" {
-		// Test mode: route everything to the httptest server
-		if project != "" {
-			base = fmt.Sprintf("%s/%s/%s/_apis%s", c.testBaseURL, c.organization, project, path)
-		} else {
-			base = fmt.Sprintf("%s/%s/_apis%s", c.testBaseURL, c.organization, path)
-		}
-	} else if project != "" {
+	switch {
+	case c.testBaseURL != "" && project != "":
+		// Test mode with project: route to httptest server
+		base = fmt.Sprintf("%s/%s/%s/_apis%s", c.testBaseURL, c.organization, project, path)
+	case c.testBaseURL != "":
+		// Test mode without project
+		base = fmt.Sprintf("%s/%s/_apis%s", c.testBaseURL, c.organization, path)
+	case project != "":
 		base = fmt.Sprintf("https://%s/%s/%s/_apis%s", host, c.organization, project, path)
-	} else {
+	default:
 		base = fmt.Sprintf("https://%s/%s/_apis%s", host, c.organization, path)
 	}
 
@@ -359,14 +359,14 @@ func readBody(resp *http.Response) ([]byte, error) {
 }
 
 func parseAPIError(statusCode int, body []byte) error {
-	if statusCode == http.StatusForbidden {
+	switch statusCode {
+	case http.StatusForbidden:
 		return fmt.Errorf("403 Forbidden: Permission denied. Ensure your PAT has the required scopes. Details: %s", string(body))
-	}
-	if statusCode == http.StatusUnauthorized {
+	case http.StatusUnauthorized:
 		return fmt.Errorf("401 Unauthorized: Authentication failed. Check your PAT. Details: %s", string(body))
-	}
-	if statusCode == http.StatusNotFound {
+	case http.StatusNotFound:
 		return fmt.Errorf("404 Not Found: Resource not found. Check project/org name and path. Details: %s", string(body))
+	default:
+		return fmt.Errorf("API error %d: %s", statusCode, string(body))
 	}
-	return fmt.Errorf("API error %d: %s", statusCode, string(body))
 }

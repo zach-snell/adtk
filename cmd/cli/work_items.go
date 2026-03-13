@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -131,13 +130,4 @@ func fieldStr(fields map[string]interface{}, key string) string {
 	default:
 		return fmt.Sprintf("%v", val)
 	}
-}
-
-// fieldStrSlice extracts semicolon-delimited string as slice.
-func fieldStrSlice(fields map[string]interface{}, key string) []string {
-	v := fieldStr(fields, key)
-	if v == "-" || v == "" {
-		return nil
-	}
-	return strings.Split(v, "; ")
 }

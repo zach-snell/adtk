@@ -39,107 +39,139 @@ func ManagePullRequestsHandler(c *devops.Client, enableWrites bool) func(context
 	return func(ctx context.Context, req *sdkmcp.CallToolRequest, input ManagePullRequestsInput) (*sdkmcp.CallToolResult, any, error) {
 		switch input.Action {
 		case "list":
-			if input.RepoID == "" {
-				return resultError("repo_id is required for 'list' action")
-			}
-			prs, err := c.ListPullRequests(input.ProjectKey, input.RepoID, input.Status, input.Top)
-			if err != nil {
-				return resultError(fmt.Sprintf("listing PRs: %v", err))
-			}
-			return resultJSON(prs)
+			return handlePRList(c, input)
 		case "get":
-			if input.RepoID == "" || input.PRID == 0 {
-				return resultError("repo_id and pr_id are required for 'get' action")
-			}
-			pr, err := c.GetPullRequest(input.ProjectKey, input.RepoID, input.PRID)
-			if err != nil {
-				return resultError(fmt.Sprintf("getting PR: %v", err))
-			}
-			return resultJSON(pr)
+			return handlePRGet(c, input)
 		case "create":
-			if !enableWrites {
-				return resultError("create action requires ADTK_ENABLE_WRITES=true")
-			}
-			if input.RepoID == "" || input.Title == "" || input.SourceBranch == "" || input.TargetBranch == "" {
-				return resultError("repo_id, title, source_branch, and target_branch are required for 'create' action")
-			}
-			pr := &devops.PullRequest{
-				Title:         input.Title,
-				Description:   input.Description,
-				SourceRefName: "refs/heads/" + input.SourceBranch,
-				TargetRefName: "refs/heads/" + input.TargetBranch,
-				IsDraft:       input.IsDraft,
-			}
-			result, err := c.CreatePullRequest(input.ProjectKey, input.RepoID, pr)
-			if err != nil {
-				return resultError(fmt.Sprintf("creating PR: %v", err))
-			}
-			return resultJSON(result)
+			return handlePRCreate(c, input, enableWrites)
 		case "update":
-			if !enableWrites {
-				return resultError("update action requires ADTK_ENABLE_WRITES=true")
-			}
-			if input.RepoID == "" || input.PRID == 0 {
-				return resultError("repo_id and pr_id are required for 'update' action")
-			}
-			update := make(map[string]interface{})
-			if input.Title != "" {
-				update["title"] = input.Title
-			}
-			if input.Description != "" {
-				update["description"] = input.Description
-			}
-			if input.Status != "" {
-				update["status"] = input.Status
-			}
-			result, err := c.UpdatePullRequest(input.ProjectKey, input.RepoID, input.PRID, update)
-			if err != nil {
-				return resultError(fmt.Sprintf("updating PR: %v", err))
-			}
-			return resultJSON(result)
+			return handlePRUpdate(c, input, enableWrites)
 		case "add_comment":
-			if !enableWrites {
-				return resultError("add_comment action requires ADTK_ENABLE_WRITES=true")
-			}
-			if input.RepoID == "" || input.PRID == 0 || input.Comment == "" {
-				return resultError("repo_id, pr_id, and comment are required for 'add_comment' action")
-			}
-			thread, err := c.AddPRComment(input.ProjectKey, input.RepoID, input.PRID, input.Comment)
-			if err != nil {
-				return resultError(fmt.Sprintf("adding PR comment: %v", err))
-			}
-			return resultJSON(thread)
+			return handlePRAddComment(c, input, enableWrites)
 		case "list_comments":
-			if input.RepoID == "" || input.PRID == 0 {
-				return resultError("repo_id and pr_id are required for 'list_comments' action")
-			}
-			threads, err := c.ListPRThreads(input.ProjectKey, input.RepoID, input.PRID)
-			if err != nil {
-				return resultError(fmt.Sprintf("listing PR comments: %v", err))
-			}
-			return resultJSON(threads)
+			return handlePRListComments(c, input)
 		case "vote":
-			if !enableWrites {
-				return resultError("vote action requires ADTK_ENABLE_WRITES=true")
-			}
-			if input.RepoID == "" || input.PRID == 0 || input.ReviewerID == "" {
-				return resultError("repo_id, pr_id, and reviewer_id are required for 'vote' action")
-			}
-			if err := c.VotePR(input.ProjectKey, input.RepoID, input.PRID, input.ReviewerID, input.Vote); err != nil {
-				return resultError(fmt.Sprintf("voting on PR: %v", err))
-			}
-			return resultText(fmt.Sprintf("Vote %d submitted for PR %d", input.Vote, input.PRID))
+			return handlePRVote(c, input, enableWrites)
 		case "list_reviewers":
-			if input.RepoID == "" || input.PRID == 0 {
-				return resultError("repo_id and pr_id are required for 'list_reviewers' action")
-			}
-			reviewers, err := c.ListPRReviewers(input.ProjectKey, input.RepoID, input.PRID)
-			if err != nil {
-				return resultError(fmt.Sprintf("listing reviewers: %v", err))
-			}
-			return resultJSON(reviewers)
+			return handlePRListReviewers(c, input)
 		default:
 			return resultError(fmt.Sprintf("unknown action: %s", input.Action))
 		}
 	}
+}
+
+func handlePRList(c *devops.Client, input ManagePullRequestsInput) (*sdkmcp.CallToolResult, any, error) {
+	if input.RepoID == "" {
+		return resultError("repo_id is required for 'list' action")
+	}
+	prs, err := c.ListPullRequests(input.ProjectKey, input.RepoID, input.Status, input.Top)
+	if err != nil {
+		return resultError(fmt.Sprintf("listing PRs: %v", err))
+	}
+	return resultJSON(prs)
+}
+
+func handlePRGet(c *devops.Client, input ManagePullRequestsInput) (*sdkmcp.CallToolResult, any, error) {
+	if input.RepoID == "" || input.PRID == 0 {
+		return resultError("repo_id and pr_id are required for 'get' action")
+	}
+	pr, err := c.GetPullRequest(input.ProjectKey, input.RepoID, input.PRID)
+	if err != nil {
+		return resultError(fmt.Sprintf("getting PR: %v", err))
+	}
+	return resultJSON(pr)
+}
+
+func handlePRCreate(c *devops.Client, input ManagePullRequestsInput, enableWrites bool) (*sdkmcp.CallToolResult, any, error) {
+	if !enableWrites {
+		return resultError("create action requires ADTK_ENABLE_WRITES=true")
+	}
+	if input.RepoID == "" || input.Title == "" || input.SourceBranch == "" || input.TargetBranch == "" {
+		return resultError("repo_id, title, source_branch, and target_branch are required for 'create' action")
+	}
+	pr := &devops.PullRequest{
+		Title:         input.Title,
+		Description:   input.Description,
+		SourceRefName: "refs/heads/" + input.SourceBranch,
+		TargetRefName: "refs/heads/" + input.TargetBranch,
+		IsDraft:       input.IsDraft,
+	}
+	result, err := c.CreatePullRequest(input.ProjectKey, input.RepoID, pr)
+	if err != nil {
+		return resultError(fmt.Sprintf("creating PR: %v", err))
+	}
+	return resultJSON(result)
+}
+
+func handlePRUpdate(c *devops.Client, input ManagePullRequestsInput, enableWrites bool) (*sdkmcp.CallToolResult, any, error) {
+	if !enableWrites {
+		return resultError("update action requires ADTK_ENABLE_WRITES=true")
+	}
+	if input.RepoID == "" || input.PRID == 0 {
+		return resultError("repo_id and pr_id are required for 'update' action")
+	}
+	update := make(map[string]interface{})
+	if input.Title != "" {
+		update["title"] = input.Title
+	}
+	if input.Description != "" {
+		update["description"] = input.Description
+	}
+	if input.Status != "" {
+		update["status"] = input.Status
+	}
+	result, err := c.UpdatePullRequest(input.ProjectKey, input.RepoID, input.PRID, update)
+	if err != nil {
+		return resultError(fmt.Sprintf("updating PR: %v", err))
+	}
+	return resultJSON(result)
+}
+
+func handlePRAddComment(c *devops.Client, input ManagePullRequestsInput, enableWrites bool) (*sdkmcp.CallToolResult, any, error) {
+	if !enableWrites {
+		return resultError("add_comment action requires ADTK_ENABLE_WRITES=true")
+	}
+	if input.RepoID == "" || input.PRID == 0 || input.Comment == "" {
+		return resultError("repo_id, pr_id, and comment are required for 'add_comment' action")
+	}
+	thread, err := c.AddPRComment(input.ProjectKey, input.RepoID, input.PRID, input.Comment)
+	if err != nil {
+		return resultError(fmt.Sprintf("adding PR comment: %v", err))
+	}
+	return resultJSON(thread)
+}
+
+func handlePRListComments(c *devops.Client, input ManagePullRequestsInput) (*sdkmcp.CallToolResult, any, error) {
+	if input.RepoID == "" || input.PRID == 0 {
+		return resultError("repo_id and pr_id are required for 'list_comments' action")
+	}
+	threads, err := c.ListPRThreads(input.ProjectKey, input.RepoID, input.PRID)
+	if err != nil {
+		return resultError(fmt.Sprintf("listing PR comments: %v", err))
+	}
+	return resultJSON(threads)
+}
+
+func handlePRVote(c *devops.Client, input ManagePullRequestsInput, enableWrites bool) (*sdkmcp.CallToolResult, any, error) {
+	if !enableWrites {
+		return resultError("vote action requires ADTK_ENABLE_WRITES=true")
+	}
+	if input.RepoID == "" || input.PRID == 0 || input.ReviewerID == "" {
+		return resultError("repo_id, pr_id, and reviewer_id are required for 'vote' action")
+	}
+	if err := c.VotePR(input.ProjectKey, input.RepoID, input.PRID, input.ReviewerID, input.Vote); err != nil {
+		return resultError(fmt.Sprintf("voting on PR: %v", err))
+	}
+	return resultText(fmt.Sprintf("Vote %d submitted for PR %d", input.Vote, input.PRID))
+}
+
+func handlePRListReviewers(c *devops.Client, input ManagePullRequestsInput) (*sdkmcp.CallToolResult, any, error) {
+	if input.RepoID == "" || input.PRID == 0 {
+		return resultError("repo_id and pr_id are required for 'list_reviewers' action")
+	}
+	reviewers, err := c.ListPRReviewers(input.ProjectKey, input.RepoID, input.PRID)
+	if err != nil {
+		return resultError(fmt.Sprintf("listing reviewers: %v", err))
+	}
+	return resultJSON(reviewers)
 }
