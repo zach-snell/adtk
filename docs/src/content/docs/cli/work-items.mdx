@@ -1,0 +1,122 @@
+---
+title: adtk work-items
+description: Manage Azure DevOps work items from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `work-items` command group (alias: `wi`) lets you query, inspect, and list work items from Azure DevOps.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name |
+
+## get
+
+Get a single work item by its ID.
+
+```bash
+adtk work-items get <id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk wi get 42 -p MyProject
+```
+
+```
+  ID:             42
+  Rev:            5
+  System.Title:   Fix login page redirect
+  System.State:   Active
+  System.AssignedTo: Jane Doe
+```
+
+## list
+
+List work items using a WIQL query. If no query is provided, a default query returns recent work items ordered by changed date.
+
+```bash
+adtk work-items list [--project myproject] [--query "SELECT ..."] [--top 25]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--query`, `-q` | Recent items query | WIQL query string |
+| `--top` | `25` | Max results to return |
+
+**Example:**
+
+```bash
+adtk wi list -p MyProject --query "SELECT [System.Id], [System.Title] FROM WorkItems WHERE [System.State] = 'Active'" --top 10
+```
+
+```
+ID    TYPE         TITLE                                              STATE   ASSIGNED TO
+42    Bug          Fix login page redirect                            Active  Jane Doe
+51    User Story   Add dark mode support                              Active  John Smith
+
+2 work items
+```
+
+## types
+
+List available work item types for a project. Requires `--project`.
+
+```bash
+adtk work-items types --project MyProject
+```
+
+```
+NAME          DESCRIPTION
+Bug           Describes a divergence between required and actual behavior
+Epic          Describes a large body of work
+Task          Describes work to be completed
+User Story    Describes functionality from a user perspective
+```
+
+## my
+
+List work items currently assigned to you.
+
+```bash
+adtk work-items my [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk wi my -p MyProject
+```
+
+```
+ID    TYPE         TITLE                                              STATE   ASSIGNED TO
+42    Bug          Fix login page redirect                            Active  Jane Doe
+55    Task         Update API documentation                           Active  Jane Doe
+
+2 work items
+```
+
+## comments
+
+List comments on a work item.
+
+```bash
+adtk work-items comments <id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk wi comments 42 -p MyProject
+```
+
+```
+ID    AUTHOR      DATE              TEXT
+1     Jane Doe    2025-01-15 10:30  Investigating the root cause now...
+2     John Smith  2025-01-15 14:22  Found the issue in the redirect handler
+
+2 comments
+```

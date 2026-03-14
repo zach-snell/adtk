@@ -1,0 +1,60 @@
+---
+title: manage_advanced_security
+description: MCP tool for managing Azure DevOps Advanced Security alerts
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps Advanced Security alerts. List security alerts for a repository and get detailed information about specific alerts. Requires Azure DevOps Advanced Security to be enabled on the organization.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list_alerts` | List security alerts for a repository | `project_key`, `repo_id` | `states`, `severities` | No |
+| `get_alert` | Get details for a specific alert | `project_key`, `repo_id`, `alert_id` | | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `list_alerts`, `get_alert` |
+| `project_key` | string | **Required.** Project name |
+| `repo_id` | string | **Required.** Repository name or ID |
+| `alert_id` | integer | Alert ID (required for `get_alert`) |
+| `states` | string | Filter by alert states (for `list_alerts`) |
+| `severities` | string | Filter by severities (for `list_alerts`) |
+
+## Examples
+
+### List all alerts
+
+```json
+{
+  "action": "list_alerts",
+  "project_key": "MyProject",
+  "repo_id": "backend-api"
+}
+```
+
+### List critical and high severity alerts
+
+```json
+{
+  "action": "list_alerts",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "severities": "critical,high",
+  "states": "active"
+}
+```
+
+### Get alert details
+
+```json
+{
+  "action": "get_alert",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "alert_id": 42
+}
+```

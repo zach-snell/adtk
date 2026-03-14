@@ -1,0 +1,115 @@
+---
+title: Security
+description: Write protection, PAT scopes, and rate limiting in adtk.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+## Write Protection
+
+adtk is **read-only by default**. All mutating operations are gated behind the `ADTK_ENABLE_WRITES` environment variable.
+
+<CardGrid>
+  <Card title="Read-Only Mode (default)" icon="approve-check-circle">
+    When `ADTK_ENABLE_WRITES` is unset or `false`, adtk only allows read operations: get, list, search, batch_get. Any attempt to create, update, delete, or trigger returns an error.
+  </Card>
+  <Card title="Write Mode" icon="warning">
+    Set `ADTK_ENABLE_WRITES=true` to unlock: create, update, delete, batch_update, add_comment, update_comment, add_children, link, unlink, add_artifact_link, vote, create_branch, trigger, create_page, update_page, delete_page, upload, create_thread, update_thread, reply_to_comment, update_reviewers, create_plan, create_suite.
+  </Card>
+</CardGrid>
+
+### Write-Protected Actions by Tool
+
+| Tool | Write Actions |
+|---|---|
+| `manage_work_items` | create, update, delete, add_comment, update_comment, batch_update, add_children, link, unlink, add_artifact_link |
+| `manage_pull_requests` | create, update, add_comment, vote, update_reviewers, create_thread, update_thread, reply_to_comment |
+| `manage_repos` | create_branch |
+| `manage_pipelines` | trigger |
+| `manage_wiki` | create_page, update_page, delete_page |
+| `manage_iterations` | create |
+| `manage_projects` | create |
+| `manage_test_plans` | create_plan, create_suite |
+| `manage_attachments` | upload |
+
+<Aside type="tip">
+For AI agent deployments, start with read-only mode to verify behavior, then enable writes once you're confident in the agent's actions.
+</Aside>
+
+## PAT Scopes
+
+Follow the principle of least privilege when creating your PAT:
+
+### Read-Only Deployment
+
+| Scope | Access Level |
+|---|---|
+| Work Items | Read |
+| Code | Read |
+| Build | Read |
+| Wiki | Read |
+| Project and Team | Read |
+| Identity | Read |
+| Test Management | Read |
+
+### Full Read/Write Deployment
+
+| Scope | Access Level |
+|---|---|
+| Work Items | Read & Write |
+| Code | Read & Write |
+| Pull Request Threads | Read & Write |
+| Build | Read & Execute |
+| Wiki | Read & Write |
+| Project and Team | Read & Write |
+| Identity | Read |
+| Test Management | Read & Write |
+| Advanced Security | Read |
+
+<Aside type="caution">
+Never use a Full Access PAT in production. Scope your token to only the permissions you need.
+</Aside>
+
+## Rate Limiting
+
+adtk includes a built-in token bucket rate limiter to prevent hitting Azure DevOps throttling limits.
+
+### Configuration
+
+- **Max tokens**: 30
+- **Refill rate**: 1 token every 2 seconds
+- **Behavior**: When tokens are exhausted, requests return an error immediately rather than queueing
+
+### Azure DevOps Throttling
+
+Azure DevOps uses Team Services Throttling Units (TSTUs):
+- Each organization has a 200 TSTU budget per 5-minute sliding window
+- Different API calls consume different amounts of TSTUs
+- When exceeded, ADO returns `429 Too Many Requests` with a `Retry-After` header
+
+adtk's rate limiter provides a conservative client-side throttle that stays well within the TSTU budget under normal usage.
+
+## Tool Disabling
+
+You can disable specific MCP tools entirely using the `AZURE_DEVOPS_DISABLED_TOOLS` environment variable:
+
+```bash
+export AZURE_DEVOPS_DISABLED_TOOLS="manage_wiki,manage_pipelines,manage_test_plans"
+```
+
+This prevents the tools from being registered in the MCP server, so AI agents won't see them at all. Useful for:
+
+- Restricting scope for specific deployments
+- Reducing the tool surface area for focused agents
+- Disabling tools that require scopes not available in the PAT
+
+## Network Security
+
+- All API requests use HTTPS
+- PAT is sent via HTTP Basic Auth (`Authorization: Basic ...`)
+- The PAT is never logged or included in error messages
+- HTTP client timeout is set to 30 seconds
+
+## Credential Storage
+
+When using `adtk auth`, credentials are stored in the user's home directory. For production deployments, prefer environment variables which don't persist to disk.

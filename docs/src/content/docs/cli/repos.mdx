@@ -1,0 +1,117 @@
+---
+title: adtk repos
+description: Manage Azure DevOps Git repositories from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `repos` command group lets you list, inspect, and browse Git repositories in Azure DevOps.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name |
+
+## list
+
+List all repositories in a project.
+
+```bash
+adtk repos list [--project myproject]
+```
+
+```
+NAME              DEFAULT BRANCH     SIZE      REMOTE URL
+backend-api       refs/heads/main    52840     https://dev.azure.com/myorg/MyProject/_git/backend-api
+frontend-app      refs/heads/main    38120     https://dev.azure.com/myorg/MyProject/_git/frontend-app
+
+2 repositories
+```
+
+## get
+
+Get detailed information about a specific repository.
+
+```bash
+adtk repos get <repo> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk repos get backend-api -p MyProject
+```
+
+```
+  ID:             a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  Name:           backend-api
+  Default Branch: refs/heads/main
+  Size:           52840 bytes
+  Remote URL:     https://dev.azure.com/myorg/MyProject/_git/backend-api
+  Web URL:        https://dev.azure.com/myorg/MyProject/_git/backend-api
+  Project:        MyProject
+```
+
+## branches
+
+List branches for a repository.
+
+```bash
+adtk repos branches <repo> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk repos branches backend-api -p MyProject
+```
+
+```
+NAME                  OBJECT ID
+refs/heads/main       a1b2c3d4e5f6
+refs/heads/develop    f6e5d4c3b2a1
+
+2 branches
+```
+
+## tree
+
+List files and directories in a repository path.
+
+```bash
+adtk repos tree <repo> [path] [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk repos tree backend-api /src -p MyProject
+```
+
+```
+TYPE    PATH
+tree    /src/handlers
+tree    /src/models
+blob    /src/main.go
+blob    /src/config.go
+```
+
+## commits
+
+Search commits in a repository. Outputs raw JSON.
+
+```bash
+adtk repos commits <repo> [--project myproject] [--author name] [--from date] [--to date]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--author` | Filter by commit author |
+| `--from` | Filter commits from this date |
+| `--to` | Filter commits to this date |
+
+**Example:**
+
+```bash
+adtk repos commits backend-api -p MyProject --author "Jane" --from "2025-01-01"
+```

@@ -1,0 +1,91 @@
+---
+title: manage_wiki
+description: MCP tool for managing Azure DevOps wiki pages (markdown-native)
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps wiki pages. Wikis in Azure DevOps are markdown-native. Supports listing wikis, reading pages, creating new pages, updating content, and deleting pages.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List all wikis in a project | `project_key` | | No |
+| `list_pages` | List all pages in a wiki | `project_key`, `wiki_id` | | No |
+| `get_page` | Get a wiki page with content | `project_key`, `wiki_id`, `page_path` | | No |
+| `create_page` | Create a new wiki page | `project_key`, `wiki_id`, `page_path`, `content` | | Yes |
+| `update_page` | Update an existing wiki page | `project_key`, `wiki_id`, `page_path`, `content` | `version` | Yes |
+| `delete_page` | Delete a wiki page | `project_key`, `wiki_id`, `page_path` | | Yes |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | **Required.** Project name |
+| `wiki_id` | string | Wiki name or ID (required for page operations) |
+| `page_path` | string | Wiki page path, e.g. `/Home` or `/Design/Architecture` (required for page operations) |
+| `content` | string | Page content in Markdown (for create_page, update_page) |
+| `version` | integer | Page version for optimistic concurrency (for update_page) |
+
+<Aside type="tip">
+When updating a page, provide the current `version` number to prevent overwriting concurrent changes. Get the current version from `get_page` first.
+</Aside>
+
+## Examples
+
+### List wikis
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject"
+}
+```
+
+### Get a wiki page
+
+```json
+{
+  "action": "get_page",
+  "project_key": "MyProject",
+  "wiki_id": "Project Wiki",
+  "page_path": "/Architecture/Backend"
+}
+```
+
+### Create a new page
+
+```json
+{
+  "action": "create_page",
+  "project_key": "MyProject",
+  "wiki_id": "Project Wiki",
+  "page_path": "/Architecture/NewService",
+  "content": "# New Service\n\nArchitecture documentation for the new service."
+}
+```
+
+### Update a page
+
+```json
+{
+  "action": "update_page",
+  "project_key": "MyProject",
+  "wiki_id": "Project Wiki",
+  "page_path": "/Architecture/Backend",
+  "content": "# Backend Architecture\n\nUpdated documentation.",
+  "version": 3
+}
+```
+
+### Delete a page
+
+```json
+{
+  "action": "delete_page",
+  "project_key": "MyProject",
+  "wiki_id": "Project Wiki",
+  "page_path": "/Architecture/Deprecated"
+}
+```

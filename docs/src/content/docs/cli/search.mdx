@@ -1,0 +1,80 @@
+---
+title: adtk search
+description: Search Azure DevOps code, work items, and WIQL queries
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `search` command group provides text search across code repositories, work items, and WIQL queries.
+
+## Shared Flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--project` | `-p` | | Project name (optional, scopes the search) |
+| `--top` | | `25` | Max results to return |
+
+## code
+
+Search code across all repositories in the organization or project.
+
+```bash
+adtk search code <query> [--project myproject] [--top 25]
+```
+
+**Example:**
+
+```bash
+adtk search code "func handleAuth" -p MyProject
+```
+
+```
+FILE              PATH                          REPOSITORY    PROJECT
+auth.go           /src/handlers/auth.go         backend-api   MyProject
+middleware.go     /src/middleware/middleware.go   backend-api   MyProject
+
+2 results
+```
+
+## work-items
+
+Search work items by text across all fields.
+
+```bash
+adtk search work-items <query> [--project myproject] [--top 25]
+```
+
+**Example:**
+
+```bash
+adtk search work-items "login redirect bug" -p MyProject
+```
+
+```
+ID    TYPE    TITLE                                     STATE   PROJECT
+42    Bug     Fix login page redirect                   Active  MyProject
+78    Task    Investigate redirect loop on login         Closed  MyProject
+
+2 results
+```
+
+## wiql
+
+Execute a WIQL (Work Item Query Language) query directly.
+
+```bash
+adtk search wiql <query> [--project myproject] [--top 25]
+```
+
+**Example:**
+
+```bash
+adtk search wiql "SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.State] = 'Active' AND [System.WorkItemType] = 'Bug' ORDER BY [System.ChangedDate] DESC" -p MyProject --top 10
+```
+
+```
+ID    TYPE    TITLE                                              STATE
+42    Bug     Fix login page redirect                            Active
+67    Bug     Memory leak in background worker                   Active
+
+2 work items
+```

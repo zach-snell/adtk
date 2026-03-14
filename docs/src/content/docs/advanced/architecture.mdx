@@ -1,0 +1,196 @@
+---
+title: Architecture
+description: How adtk works under the hood — multi-base-URL routing, JSON Patch, WIQL 2-step, and response flattening.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+adtk is built on a custom HTTP client that directly calls Azure DevOps REST APIs. There is no third-party SDK dependency — all API interactions are hand-crafted HTTP requests with JSON marshaling.
+
+```
+┌──────────────────────────────────────────────────────┐
+│                      adtk binary                      │
+│                                                       │
+│  ┌─────────────┐   ┌─────────────┐                   │
+│  │  CLI (cobra) │   │ MCP (go-sdk)│                   │
+│  └──────┬──────┘   └──────┬──────┘                   │
+│         │                  │                          │
+│         └────────┬─────────┘                          │
+│                  ▼                                    │
+│         ┌────────────────┐                            │
+│         │  devops.Client │                            │
+│         │                │                            │
+│         │  ├ RateLimiter │                            │
+│         │  ├ PAT Auth    │                            │
+│         │  └ HTTP Client │                            │
+│         └────────┬───────┘                            │
+│                  │                                    │
+│    ┌─────────────┼─────────────┬──────────────┐      │
+│    ▼             ▼             ▼              ▼      │
+│  HostMain    HostIdentity  HostSearch    HostRelease  │
+│  dev.azure   vssps.dev     almsearch    vsrm.dev     │
+│  .com        .azure.com    .dev.azure   .azure.com   │
+│                            .com                      │
+└──────────────────────────────────────────────────────┘
+```
+
+## Multi-Base-URL Routing
+
+Azure DevOps uses different hostnames for different API domains:
+
+| Constant | Hostname | Used For |
+|---|---|---|
+| `HostMain` | `dev.azure.com` | Projects, repos, work items, PRs, pipelines, wiki, boards, iterations |
+| `HostIdentity` | `vssps.dev.azure.com` | User identity, Graph API |
+| `HostSearch` | `almsearch.dev.azure.com` | Code search, work item search, wiki search |
+| `HostRelease` | `vsrm.dev.azure.com` | Release management (classic releases) |
+
+The `Client.buildURL()` method routes requests to the correct base URL:
+
+```go
+func (c *Client) buildURL(host, project, path string, query url.Values) string {
+    // Routes to: https://{host}/{org}/{project}/_apis{path}?api-version=7.1
+    // Or without project: https://{host}/{org}/_apis{path}?api-version=7.1
+}
+```
+
+## PAT Authentication
+
+Azure DevOps uses HTTP Basic Auth with an empty username:
+
+```
+Authorization: Basic base64(":" + pat)
+```
+
+This is pre-computed once at client creation and reused for all requests:
+
+```go
+encoded := base64.StdEncoding.EncodeToString([]byte(":" + pat))
+c.authHeader = "Basic " + encoded
+```
+
+## JSON Patch for Work Items
+
+Azure DevOps requires `application/json-patch+json` content type for work item create/update operations. Fields are sent as JSON Patch operations:
+
+```json
+[
+  { "op": "add", "path": "/fields/System.Title", "value": "My Task" },
+  { "op": "add", "path": "/fields/System.State", "value": "Active" },
+  { "op": "add", "path": "/relations/-", "value": {
+    "rel": "System.LinkTypes.Hierarchy-Reverse",
+    "url": "https://dev.azure.com/{org}/_apis/wit/workitems/{parentId}"
+  }}
+]
+```
+
+adtk's `BuildJSONPatchOps()` converts a simple field map into these operations, and `PatchJSONPatch()` sends them with the correct content type.
+
+## WIQL 2-Step Pattern
+
+WIQL queries return only work item IDs, not full objects. adtk implements a two-step fetch:
+
+1. **POST** the WIQL query → returns `{ workItems: [{ id: 1 }, { id: 2 }, ...] }`
+2. **GET** the work items in batch → `/_apis/wit/workitems?ids=1,2,...&$expand=All`
+
+The batch GET supports up to 200 IDs per request. For larger result sets, adtk chunks the IDs.
+
+```go
+func (c *Client) WIQLAndFetch(project, query string, fields []string, top int) ([]WorkItem, error) {
+    // Step 1: Execute WIQL
+    ids := executeWIQL(query)
+    // Step 2: Batch fetch
+    return getWorkItemsBatch(ids)
+}
+```
+
+## Response Flattener
+
+Azure DevOps returns work item fields with verbose prefixes:
+
+```json
+{
+  "fields": {
+    "System.Title": "My Task",
+    "System.State": "Active",
+    "Microsoft.VSTS.Common.Priority": 2,
+    "Microsoft.VSTS.Scheduling.StoryPoints": 5
+  },
+  "_links": { ... }
+}
+```
+
+adtk's flattener strips prefixes and converts to snake_case:
+
+```json
+{
+  "id": 42,
+  "title": "My Task",
+  "state": "Active",
+  "priority": 2,
+  "story_points": 5
+}
+```
+
+The conversion rules:
+1. Strip `System.` prefix
+2. Strip `Microsoft.VSTS.Common.` prefix
+3. Strip `Microsoft.VSTS.Scheduling.` prefix
+4. Strip `Microsoft.VSTS.TCM.` prefix
+5. Convert CamelCase to snake_case
+6. Remove `_links` entirely
+
+This reduces token usage for AI agents by approximately 40-60% per work item response.
+
+## Rate Limiter
+
+Azure DevOps uses a TSTU-based (Team Services Throttling Unit) rate limiting model with a 200 TSTU budget per 5-minute sliding window. adtk implements a token bucket rate limiter:
+
+```go
+rateLimiter: NewRateLimiter(30, 2*time.Second)
+// 30 tokens max, refill 1 token every 2 seconds
+```
+
+When the bucket is empty, requests are rejected with a clear error message rather than hitting the ADO rate limit and getting a 429.
+
+## ETag-Based Wiki Updates
+
+Wiki page updates require optimistic concurrency via ETag headers (which correspond to Git SHAs in the wiki's backing repo):
+
+1. **GET** the page → captures `ETag` response header
+2. **PUT** the updated content with `If-Match: {etag}` header
+
+```go
+func (c *Client) UpdateWikiPage(project, wiki, path, content string, version int) (*WikiPage, error) {
+    // GET current page to obtain ETag
+    _, etag, _ := c.GetWithETag(project, pagePath, query)
+    // PUT with If-Match
+    return c.PutWithETag(project, pagePath, query, body, etag)
+}
+```
+
+## Team-Scoped APIs
+
+Some Azure DevOps APIs (iterations, boards) are team-scoped. The URL pattern changes from:
+
+```
+/{org}/{project}/_apis/...
+```
+
+to:
+
+```
+/{org}/{project}/{team}/_apis/...
+```
+
+adtk handles this transparently in the client layer.
+
+## ADOTime Custom Type
+
+Azure DevOps returns dates in a non-standard format (sometimes ISO 8601, sometimes `/Date(...)\/`). The `devops` package handles both formats seamlessly.
+
+## API Version
+
+All requests use API version `7.1` by default. Some endpoints require the `-preview` suffix, which is handled by `GetPreview()` and `PostPreview()` methods.

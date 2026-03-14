@@ -1,0 +1,82 @@
+---
+title: adtk pipelines
+description: Manage Azure DevOps CI/CD pipelines from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `pipelines` command group (alias: `pipe`) lets you list and inspect CI/CD pipeline definitions and their runs.
+
+## Shared Flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--project` | `-p` | | Project name (required) |
+| `--top` | | `25` | Max results to return |
+
+## list
+
+List pipeline definitions in a project.
+
+```bash
+adtk pipelines list --project MyProject
+```
+
+```
+ID    NAME                    FOLDER
+1     CI Build                \
+2     Deploy to Staging       \deployments
+3     Release Pipeline        \deployments
+
+3 pipelines
+```
+
+## get
+
+Get details about a specific pipeline.
+
+```bash
+adtk pipelines get <pipeline-id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk pipe get 1 -p MyProject
+```
+
+```
+  ID:             1
+  Name:           CI Build
+  Folder:         \
+```
+
+## runs
+
+List runs for a specific pipeline.
+
+```bash
+adtk pipelines runs <pipeline-id> --project MyProject [--top 25]
+```
+
+**Example:**
+
+```bash
+adtk pipe runs 1 -p MyProject --top 5
+```
+
+```
+ID    NAME        STATE       RESULT      CREATED
+100   Run 100     completed   succeeded   2025-01-15 14:30
+99    Run 99      completed   succeeded   2025-01-14 09:15
+98    Run 98      completed   failed      2025-01-13 16:00
+
+3 runs
+```
+
+## definitions
+
+List build definitions in a project. Outputs raw JSON.
+
+```bash
+adtk pipelines definitions --project MyProject
+```

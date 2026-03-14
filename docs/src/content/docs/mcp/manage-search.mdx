@@ -1,0 +1,70 @@
+---
+title: manage_search
+description: MCP tool for searching Azure DevOps — WIQL, code, work items, wiki
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Search Azure DevOps using WIQL queries, code search, work item text search, or wiki search. All actions require a `query` parameter.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `wiql` | Execute a WIQL query and return full work items | `query` | `project_key`, `fields`, `top` | No |
+| `code` | Search code across repositories | `query` | `project_key`, `top` | No |
+| `work_items` | Search work items by text | `query` | `project_key`, `top` | No |
+| `wiki` | Search wiki content | `query` | `project_key`, `top` | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `wiql`, `code`, `work_items`, `wiki` |
+| `query` | string | **Required.** WIQL query string (for `wiql`) or search text (for `code`, `work_items`, `wiki`) |
+| `project_key` | string | Project name (optional, scopes the search) |
+| `top` | integer | Max results to return (default 25) |
+| `fields` | string[] | Fields to return for WIQL results |
+
+## Examples
+
+### WIQL query
+
+```json
+{
+  "action": "wiql",
+  "query": "SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.State] = 'Active' AND [System.WorkItemType] = 'Bug' ORDER BY [System.ChangedDate] DESC",
+  "project_key": "MyProject",
+  "top": 10
+}
+```
+
+### Code search
+
+```json
+{
+  "action": "code",
+  "query": "func handleAuth",
+  "project_key": "MyProject",
+  "top": 25
+}
+```
+
+### Work item text search
+
+```json
+{
+  "action": "work_items",
+  "query": "login redirect bug",
+  "project_key": "MyProject"
+}
+```
+
+### Wiki search
+
+```json
+{
+  "action": "wiki",
+  "query": "architecture diagram",
+  "project_key": "MyProject"
+}
+```

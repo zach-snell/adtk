@@ -1,0 +1,72 @@
+---
+title: manage_iterations
+description: MCP tool for managing Azure DevOps iterations (sprints)
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps iterations (sprints). List iterations, get details, find the current sprint, create new iterations, and retrieve team settings.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List all iterations for a project/team | `project_key` | `team` | No |
+| `get` | Get iteration details by ID | `project_key`, `iteration_id` | `team` | No |
+| `get_current` | Get the currently active iteration | `project_key` | `team` | No |
+| `create` | Create a new iteration | `project_key`, `name` | `start_date`, `finish_date` | Yes |
+| `get_team_settings` | Get team iteration settings | `project_key` | `team` | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | **Required.** Project name |
+| `team` | string | Team name (optional, scopes to a specific team) |
+| `iteration_id` | string | Iteration ID (required for `get`) |
+| `name` | string | Iteration name (required for `create`) |
+| `start_date` | string | Start date in `YYYY-MM-DD` format (optional, for `create`) |
+| `finish_date` | string | Finish date in `YYYY-MM-DD` format (optional, for `create`) |
+
+## Examples
+
+### List iterations
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject",
+  "team": "Backend Team"
+}
+```
+
+### Get the current sprint
+
+```json
+{
+  "action": "get_current",
+  "project_key": "MyProject"
+}
+```
+
+### Create a new sprint
+
+```json
+{
+  "action": "create",
+  "project_key": "MyProject",
+  "name": "Sprint 5",
+  "start_date": "2025-02-12",
+  "finish_date": "2025-02-25"
+}
+```
+
+### Get team settings
+
+```json
+{
+  "action": "get_team_settings",
+  "project_key": "MyProject",
+  "team": "Backend Team"
+}
+```

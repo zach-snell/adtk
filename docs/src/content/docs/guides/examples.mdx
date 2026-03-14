@@ -1,0 +1,247 @@
+---
+title: Usage Examples
+description: Real-world workflows using adtk CLI and MCP server.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Sprint Planning
+
+### View current sprint and its work items
+
+```bash
+# Get the current iteration
+adtk iterations current -p MyProject
+
+# List all work items in the current sprint
+adtk iterations list -p MyProject
+```
+
+### Via MCP (AI agent)
+
+An AI agent can automate sprint planning:
+
+```
+Tool: manage_iterations
+Input: { "action": "get_current", "project_key": "MyProject" }
+
+Tool: manage_work_items
+Input: {
+  "action": "iteration_items",
+  "project_key": "MyProject",
+  "iteration_id": "abc-123-def"
+}
+```
+
+### Create sprint tasks from a planning session
+
+```bash
+export ADTK_ENABLE_WRITES=true
+
+# Create multiple child tasks under a user story
+# Via MCP, an AI agent would use:
+```
+
+```
+Tool: manage_work_items
+Input: {
+  "action": "add_children",
+  "project_key": "MyProject",
+  "parent_id": 100,
+  "work_item_type": "Task",
+  "titles": [
+    "Design API schema",
+    "Implement backend endpoint",
+    "Write unit tests",
+    "Update API documentation"
+  ]
+}
+```
+
+## Code Review Workflow
+
+### List active pull requests
+
+```bash
+adtk pull-requests list myrepo -p MyProject --status active
+```
+
+### Review a specific PR
+
+```bash
+# Get PR details
+adtk pull-requests get myrepo 42
+
+# View comments/threads
+adtk pull-requests comments myrepo 42
+
+# List reviewers
+adtk pull-requests reviewers myrepo 42
+```
+
+### AI-assisted code review
+
+An AI agent can review PRs and leave comments:
+
+```
+# Get the PR
+Tool: manage_pull_requests
+Input: { "action": "get", "repo_id": "myrepo", "pr_id": 42, "project_key": "MyProject" }
+
+# Get the changed files
+Tool: manage_repos
+Input: { "action": "get_file", "repo_id": "myrepo", "file_path": "/src/main.go", "version": "feature-branch", "project_key": "MyProject" }
+
+# Leave an inline comment
+Tool: manage_pull_requests
+Input: {
+  "action": "create_thread",
+  "repo_id": "myrepo",
+  "pr_id": 42,
+  "project_key": "MyProject",
+  "comment": "Consider using a context parameter here for cancellation support.",
+  "file_path": "/src/main.go",
+  "line": 45
+}
+
+# Approve the PR
+Tool: manage_pull_requests
+Input: {
+  "action": "vote",
+  "repo_id": "myrepo",
+  "pr_id": 42,
+  "project_key": "MyProject",
+  "reviewer_id": "reviewer-guid",
+  "vote": 10
+}
+```
+
+## Backlog Grooming with MCP
+
+### Find unestimated items in the backlog
+
+```
+Tool: manage_search
+Input: {
+  "action": "wiql",
+  "query": "SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.WorkItemType] = 'User Story' AND [System.State] = 'New' AND [Microsoft.VSTS.Scheduling.StoryPoints] = '' ORDER BY [Microsoft.VSTS.Common.Priority] ASC",
+  "project_key": "MyProject"
+}
+```
+
+### Batch update priorities
+
+```
+Tool: manage_work_items
+Input: {
+  "action": "batch_update",
+  "work_item_ids": [101, 102, 103],
+  "priority": 2,
+  "project_key": "MyProject"
+}
+```
+
+## Pipeline Monitoring
+
+### Check recent pipeline runs
+
+```bash
+# List pipelines
+adtk pipelines list -p MyProject
+
+# Get runs for a specific pipeline
+adtk pipelines runs 42 -p MyProject
+
+# Get detailed logs
+adtk pipelines logs 42 --run 100 -p MyProject
+```
+
+### AI-driven CI/CD debugging
+
+```
+# List recent runs
+Tool: manage_pipelines
+Input: { "action": "list_runs", "pipeline_id": 42, "project_key": "MyProject", "top": 5 }
+
+# Get a failed run
+Tool: manage_pipelines
+Input: { "action": "get_run", "pipeline_id": 42, "run_id": 100, "project_key": "MyProject" }
+
+# Get the logs to diagnose the failure
+Tool: manage_pipelines
+Input: { "action": "get_logs", "pipeline_id": 42, "run_id": 100, "project_key": "MyProject" }
+
+# Drill into a specific log
+Tool: manage_pipelines
+Input: { "action": "get_log", "pipeline_id": 42, "run_id": 100, "log_id": 3, "project_key": "MyProject" }
+```
+
+## Wiki Documentation
+
+### Browse and update wiki pages
+
+```bash
+# List wikis
+adtk wiki list -p MyProject
+
+# Get a page
+adtk wiki get ProjectWiki /Home -p MyProject
+
+# List all pages
+adtk wiki pages ProjectWiki -p MyProject
+```
+
+### AI-generated documentation
+
+```
+# Read existing page
+Tool: manage_wiki
+Input: { "action": "get_page", "wiki_id": "ProjectWiki", "page_path": "/API/Endpoints", "project_key": "MyProject" }
+
+# Update with new content
+Tool: manage_wiki
+Input: {
+  "action": "update_page",
+  "wiki_id": "ProjectWiki",
+  "page_path": "/API/Endpoints",
+  "content": "# API Endpoints\n\n## GET /users\n\nReturns a list of users...",
+  "version": 5,
+  "project_key": "MyProject"
+}
+```
+
+## Security Alert Triage
+
+```
+# List open security alerts
+Tool: manage_advanced_security
+Input: {
+  "action": "list_alerts",
+  "project_key": "MyProject",
+  "repo_id": "myrepo",
+  "states": "active"
+}
+
+# Get details on a specific alert
+Tool: manage_advanced_security
+Input: {
+  "action": "get_alert",
+  "project_key": "MyProject",
+  "repo_id": "myrepo",
+  "alert_id": 7
+}
+```
+
+## Scripting with JSON Output
+
+All CLI commands support `--json` for machine-readable output:
+
+```bash
+# Get all active bugs assigned to me
+adtk search wiql \
+  "SELECT [System.Id] FROM WorkItems WHERE [System.WorkItemType] = 'Bug' AND [System.State] = 'Active' AND [System.AssignedTo] = @Me" \
+  --json | jq '.[] | {id, title, state}'
+
+# Export project list to CSV
+adtk projects list --json | jq -r '.[] | [.name, .id, .state] | @csv'
+```

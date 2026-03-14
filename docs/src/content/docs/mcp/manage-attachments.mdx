@@ -1,0 +1,63 @@
+---
+title: manage_attachments
+description: MCP tool for managing Azure DevOps work item attachments
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps work item attachments. List attachments on a work item, upload new files, and download existing attachments.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List attachments on a work item | `work_item_id` | `project_key` | No |
+| `upload` | Upload a file and attach to a work item | `work_item_id`, `file_path` | `project_key`, `comment` | Yes |
+| `download` | Download an attachment by URL | `url` | | No |
+
+<Aside type="note">
+The `file_path` for uploads refers to the MCP server's filesystem. In stdio mode, this is the local machine. Downloaded files are saved to a temporary directory (`$TMPDIR/adtk-downloads/`).
+</Aside>
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `list`, `upload`, `download` |
+| `project_key` | string | Project name |
+| `work_item_id` | integer | Work item ID (required for list, upload) |
+| `file_path` | string | Absolute path to the file to upload (required for upload) |
+| `comment` | string | Optional comment for the attachment (for upload, defaults to "Uploaded via adtk") |
+| `url` | string | Attachment URL (required for download) |
+
+## Examples
+
+### List attachments
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject",
+  "work_item_id": 42
+}
+```
+
+### Upload an attachment
+
+```json
+{
+  "action": "upload",
+  "project_key": "MyProject",
+  "work_item_id": 42,
+  "file_path": "/home/user/screenshots/bug-screenshot.png",
+  "comment": "Screenshot showing the error"
+}
+```
+
+### Download an attachment
+
+```json
+{
+  "action": "download",
+  "url": "https://dev.azure.com/myorg/_apis/wit/attachments/abc123-def456"
+}
+```

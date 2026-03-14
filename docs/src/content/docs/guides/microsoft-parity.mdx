@@ -1,0 +1,187 @@
+---
+title: Microsoft Parity
+description: Detailed comparison of adtk vs Microsoft's official azure-devops-mcp server.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This page provides a domain-by-domain comparison between adtk and Microsoft's official [`azure-devops-mcp`](https://github.com/microsoft/azure-devops-mcp) server.
+
+## Summary
+
+| Dimension | adtk | Microsoft azure-devops-mcp |
+|---|---|---|
+| **Total MCP tools** | 13 (consolidated) | ~75 (individual) |
+| **Total actions** | 82 | ~75 |
+| **CLI** | 15 command groups | None |
+| **Language** | Go | TypeScript |
+| **Runtime** | Single static binary | Node.js |
+| **Auth** | PAT (self-service) | Azure AD (admin consent) |
+
+## Domain Comparison
+
+### Work Items
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| Get work item | `manage_work_items` → `get` | `get_work_item` |
+| Batch get | `manage_work_items` → `batch_get` | `get_work_items` |
+| Create | `manage_work_items` → `create` | `create_work_item` |
+| Update | `manage_work_items` → `update` | `update_work_item` |
+| Delete | `manage_work_items` → `delete` | N/A |
+| Batch update | `manage_work_items` → `batch_update` | N/A |
+| Add comment | `manage_work_items` → `add_comment` | `add_work_item_comment` |
+| Update comment | `manage_work_items` → `update_comment` | N/A |
+| List comments | `manage_work_items` → `list_comments` | `get_work_item_comments` |
+| Get links | `manage_work_items` → `get_links` | N/A |
+| List types | `manage_work_items` → `list_types` | N/A |
+| Get history | `manage_work_items` → `get_history` | N/A |
+| Link items | `manage_work_items` → `link` | N/A |
+| Unlink items | `manage_work_items` → `unlink` | N/A |
+| Add artifact link | `manage_work_items` → `add_artifact_link` | N/A |
+| Add children | `manage_work_items` → `add_children` | N/A |
+| My items | `manage_work_items` → `my_items` | `get_my_work_items` |
+| Iteration items | `manage_work_items` → `iteration_items` | N/A |
+| WIQL query | `manage_search` → `wiql` | `run_wiql_query` |
+| Response flattening | System.* → snake_case | Raw API fields |
+
+### Repositories
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List repos | `manage_repos` → `list` | `list_repositories` |
+| Get repo | `manage_repos` → `get` | `get_repository` |
+| List branches | `manage_repos` → `list_branches` | `list_branches` |
+| Get file content | `manage_repos` → `get_file` | `get_file_content` |
+| Get tree | `manage_repos` → `get_tree` | `get_repository_tree` |
+| Create branch | `manage_repos` → `create_branch` | `create_branch` |
+| Search commits | `manage_repos` → `search_commits` | `get_commits` |
+
+### Pull Requests
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List PRs | `manage_pull_requests` → `list` | `list_pull_requests` |
+| Get PR | `manage_pull_requests` → `get` | `get_pull_request` |
+| Create PR | `manage_pull_requests` → `create` | `create_pull_request` |
+| Update PR | `manage_pull_requests` → `update` | `update_pull_request` |
+| Add comment | `manage_pull_requests` → `add_comment` | `create_pull_request_comment` |
+| List comments | `manage_pull_requests` → `list_comments` | `list_pull_request_comments` |
+| Vote/approve | `manage_pull_requests` → `vote` | N/A |
+| List reviewers | `manage_pull_requests` → `list_reviewers` | `list_pull_request_reviewers` |
+| Update reviewers | `manage_pull_requests` → `update_reviewers` | N/A |
+| Create thread | `manage_pull_requests` → `create_thread` | N/A |
+| Update thread | `manage_pull_requests` → `update_thread` | N/A |
+| Reply to comment | `manage_pull_requests` → `reply_to_comment` | N/A |
+
+### Pipelines
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List pipelines | `manage_pipelines` → `list` | `list_pipelines` |
+| Get pipeline | `manage_pipelines` → `get` | `get_pipeline` |
+| List runs | `manage_pipelines` → `list_runs` | `list_pipeline_runs` |
+| Get run | `manage_pipelines` → `get_run` | `get_pipeline_run` |
+| Trigger pipeline | `manage_pipelines` → `trigger` | `trigger_pipeline` |
+| Get logs | `manage_pipelines` → `get_logs` | `get_pipeline_logs` |
+| Get specific log | `manage_pipelines` → `get_log` | N/A |
+| Get build changes | `manage_pipelines` → `get_build_changes` | N/A |
+| List definitions | `manage_pipelines` → `list_definitions` | N/A |
+
+### Boards & Iterations
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List boards | `manage_boards` → `list` | N/A |
+| Get board | `manage_boards` → `get` | N/A |
+| Get columns | `manage_boards` → `get_columns` | N/A |
+| List iterations | `manage_iterations` → `list` | N/A |
+| Get iteration | `manage_iterations` → `get` | N/A |
+| Get current iteration | `manage_iterations` → `get_current` | N/A |
+| Create iteration | `manage_iterations` → `create` | N/A |
+| Get team settings | `manage_iterations` → `get_team_settings` | N/A |
+
+<Aside type="tip">
+Boards and iterations are a complete gap in Microsoft's official MCP server. adtk provides full Kanban board visibility and sprint management.
+</Aside>
+
+### Wiki
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List wikis | `manage_wiki` → `list` | `list_wikis` |
+| Get page | `manage_wiki` → `get_page` | `get_wiki_page` |
+| List pages | `manage_wiki` → `list_pages` | N/A |
+| Create page | `manage_wiki` → `create_page` | `create_wiki_page` |
+| Update page | `manage_wiki` → `update_page` | `update_wiki_page` |
+| Delete page | `manage_wiki` → `delete_page` | N/A |
+
+### Test Plans
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List plans | `manage_test_plans` → `list_plans` | N/A |
+| Create plan | `manage_test_plans` → `create_plan` | N/A |
+| List suites | `manage_test_plans` → `list_suites` | N/A |
+| Create suite | `manage_test_plans` → `create_suite` | N/A |
+| List cases | `manage_test_plans` → `list_cases` | N/A |
+| Get test results | `manage_test_plans` → `get_test_results` | N/A |
+
+### Advanced Security
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List alerts | `manage_advanced_security` → `list_alerts` | N/A |
+| Get alert | `manage_advanced_security` → `get_alert` | N/A |
+
+### Attachments
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List attachments | `manage_attachments` → `list` | N/A |
+| Upload | `manage_attachments` → `upload` | N/A |
+| Download | `manage_attachments` → `download` | N/A |
+
+### Search
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| WIQL | `manage_search` → `wiql` | `run_wiql_query` |
+| Code search | `manage_search` → `code` | `search_code` |
+| Work item search | `manage_search` → `work_items` | `search_work_items` |
+| Wiki search | `manage_search` → `wiki` | `search_wiki` |
+
+### Projects & Users
+
+| Capability | adtk | Microsoft |
+|---|---|---|
+| List projects | `manage_projects` → `list` | `list_projects` |
+| Get project | `manage_projects` → `get` | `get_project` |
+| List teams | `manage_projects` → `list_teams` | `list_teams` |
+| Get team | `manage_projects` → `get_team` | `get_team` |
+| Create project | `manage_projects` → `create` | N/A |
+| Get current user | `manage_users` → `get_current` | `get_me` |
+| Search users | `manage_users` → `search` | N/A |
+
+## Where Microsoft Leads
+
+Microsoft's MCP server has some capabilities not yet in adtk:
+
+| Feature | Status |
+|---|---|
+| Azure AD / Entra ID authentication | Not planned (PAT-first by design) |
+| Release management (classic releases) | Planned |
+
+<Aside>
+adtk's PAT-first approach is intentional. PATs are self-service and don't require admin approval, making them ideal for developer tools and AI agents. Azure AD auth adds complexity and requires organization-level consent.
+</Aside>
+
+## Architectural Differences
+
+| Aspect | adtk | Microsoft |
+|---|---|---|
+| Tool registration | 13 consolidated tools with `action` parameter | ~75 individual tool registrations |
+| Response format | Flattened, token-optimized | Raw Azure DevOps API responses |
+| Write protection | `ADTK_ENABLE_WRITES` gate | None |
+| Rate limiting | Built-in token bucket | None |
+| Error handling | Structured with PAT scope hints | Standard error propagation |

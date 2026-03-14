@@ -1,0 +1,69 @@
+---
+title: adtk projects
+description: Manage Azure DevOps projects and teams from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `projects` command group (alias: `proj`) lets you list and inspect Azure DevOps projects and their teams.
+
+## list
+
+List all projects in the organization.
+
+```bash
+adtk projects list
+```
+
+```
+NAME            STATE     VISIBILITY   LAST UPDATED
+MyProject       wellFormed  private    2025-01-15
+AnotherProject  wellFormed  private    2025-01-10
+
+2 projects
+```
+
+## get
+
+Get detailed information about a specific project.
+
+```bash
+adtk projects get <project>
+```
+
+**Example:**
+
+```bash
+adtk proj get MyProject
+```
+
+```
+  ID:             a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  Name:           MyProject
+  State:          wellFormed
+  Visibility:     private
+  Description:    Main engineering project
+  Last Updated:   2025-01-15 10:30
+```
+
+## teams
+
+List teams in a specific project.
+
+```bash
+adtk projects teams <project>
+```
+
+**Example:**
+
+```bash
+adtk proj teams MyProject
+```
+
+```
+NAME                    DESCRIPTION
+MyProject Team          The default project team
+Backend Team            Backend development team
+Frontend Team           Frontend development team
+
+3 teams
+```

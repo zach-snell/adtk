@@ -1,0 +1,88 @@
+---
+title: Introduction
+description: What adtk is, how it works, and how it compares to alternatives.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+**adtk** (Azure DevOps Toolkit) is a dual-mode Go application that provides both a full-featured CLI and a Model Context Protocol (MCP) server for Azure DevOps. It uses PAT-first authentication, requires no Azure AD admin approval, and ships as a single binary with zero runtime dependencies.
+
+## Why adtk?
+
+Azure DevOps has a rich REST API, but working with it directly is tedious. Microsoft's official MCP server (`azure-devops-mcp`) exists, but it requires Node.js, lacks a CLI, and doesn't cover boards, iterations, or attachments.
+
+adtk solves this with a single Go binary that works equally well for human operators at the terminal and AI agents via MCP.
+
+## Comparison: adtk vs Microsoft azure-devops-mcp
+
+| Feature | adtk | Microsoft azure-devops-mcp |
+|---|---|---|
+| **Language** | Go (single static binary) | TypeScript (Node.js runtime) |
+| **MCP Tools / Actions** | 13 tools / 82 actions | ~75 individual tools |
+| **CLI mode** | Full CLI with 15 command groups | No |
+| **Auth** | PAT (self-service, no admin) | Azure AD (requires admin consent) |
+| **Startup time** | ~50ms | ~2s |
+| **Response flattening** | `System.Title` → `title` | Raw API responses |
+| **Boards & Iterations** | Full support | No |
+| **Test Plans** | Full support | No |
+| **Advanced Security** | Alert listing & details | No |
+| **Attachments** | Upload, download, list | No |
+| **Write protection** | `ADTK_ENABLE_WRITES` gate | None |
+| **Rate limiting** | Built-in token bucket | None |
+| **Binary size** | ~15 MB | `npm install` (~200+ MB node_modules) |
+
+<Aside type="tip">
+adtk consolidates related actions into a single MCP tool (e.g., `manage_work_items` handles 18 actions). This reduces tool registration overhead for AI agents compared to registering 75+ individual tools.
+</Aside>
+
+## Architecture Overview
+
+adtk has a clean dual-mode architecture. Both the CLI and MCP server share the same `devops.Client` layer, ensuring identical behavior regardless of how you interact with it.
+
+```
+┌─────────────┐          ┌──────────────┐
+│  Terminal    │          │   AI Agent   │
+│  (human)     │          │ (Claude, etc)│
+└──────┬──────┘          └──────┬───────┘
+       │                        │
+       ▼                        ▼
+┌──────────────┐        ┌──────────────┐
+│   CLI Mode   │        │   MCP Mode   │
+│  (cobra)     │        │  (go-sdk)    │
+└──────┬───────┘        └──────┬───────┘
+       │                       │
+       └───────────┬───────────┘
+                   ▼
+          ┌────────────────┐
+          │  devops.Client │
+          │  (REST API)    │
+          └────────┬───────┘
+                   │
+       ┌───────────┼───────────┐
+       ▼           ▼           ▼
+  dev.azure.com  vssps.*    almsearch.*
+                 vsrm.*
+```
+
+## Key Design Decisions
+
+<CardGrid>
+  <Card title="PAT-First Auth" icon="open-book">
+    Personal Access Tokens require no admin approval. Auth is `Basic base64(":" + pat)` — simple, portable, and works everywhere.
+  </Card>
+  <Card title="Consolidated Tools" icon="puzzle">
+    Rather than 75+ individual MCP tools, adtk groups related operations into 13 tools with an `action` parameter. This keeps the tool registry clean for AI agents.
+  </Card>
+  <Card title="Response Flattening" icon="document">
+    Work item fields like `System.Title` and `Microsoft.VSTS.Common.Priority` are automatically converted to `title` and `priority`. The `_links` noise is stripped. AI agents get token-efficient payloads.
+  </Card>
+  <Card title="Write Protection" icon="warning">
+    All mutating operations (create, update, delete, trigger) are gated behind `ADTK_ENABLE_WRITES=true`. Read-only by default — safe to deploy without worrying about accidental writes.
+  </Card>
+</CardGrid>
+
+## Next Steps
+
+- [Installation](/adtk/getting-started/installation/) — Get adtk on your machine
+- [Configuration](/adtk/getting-started/configuration/) — Set up auth and MCP clients
+- [Quick Start](/adtk/getting-started/quickstart/) — Run your first commands

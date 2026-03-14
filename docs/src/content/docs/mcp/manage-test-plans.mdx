@@ -1,0 +1,96 @@
+---
+title: manage_test_plans
+description: MCP tool for managing Azure DevOps test plans, suites, and cases
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps test plans, test suites, and test cases. List and create test plans and suites, browse test cases, and retrieve test results for builds.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list_plans` | List test plans in a project | `project_key` | | No |
+| `create_plan` | Create a new test plan | `project_key`, `name` | `iteration` | Yes |
+| `list_suites` | List test suites in a plan | `project_key`, `plan_id` | | No |
+| `create_suite` | Create a new test suite | `project_key`, `plan_id`, `name` | `parent_suite_id` | Yes |
+| `list_cases` | List test cases in a suite | `project_key`, `plan_id`, `suite_id` | | No |
+| `get_test_results` | Get test results for a build | `project_key`, `build_id` | | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | **Required.** Project name |
+| `plan_id` | integer | Test plan ID (required for list_suites, create_suite, list_cases) |
+| `suite_id` | integer | Test suite ID (required for list_cases) |
+| `parent_suite_id` | integer | Parent suite ID (for create_suite, to nest suites) |
+| `build_id` | integer | Build ID (required for get_test_results) |
+| `name` | string | Name (required for create_plan, create_suite) |
+| `iteration` | string | Iteration path (for create_plan) |
+
+## Examples
+
+### List test plans
+
+```json
+{
+  "action": "list_plans",
+  "project_key": "MyProject"
+}
+```
+
+### Create a test plan
+
+```json
+{
+  "action": "create_plan",
+  "project_key": "MyProject",
+  "name": "Release 2.0 Test Plan",
+  "iteration": "MyProject\\Sprint 5"
+}
+```
+
+### List suites in a plan
+
+```json
+{
+  "action": "list_suites",
+  "project_key": "MyProject",
+  "plan_id": 1
+}
+```
+
+### Create a test suite
+
+```json
+{
+  "action": "create_suite",
+  "project_key": "MyProject",
+  "plan_id": 1,
+  "name": "Authentication Tests",
+  "parent_suite_id": 100
+}
+```
+
+### List test cases
+
+```json
+{
+  "action": "list_cases",
+  "project_key": "MyProject",
+  "plan_id": 1,
+  "suite_id": 100
+}
+```
+
+### Get test results for a build
+
+```json
+{
+  "action": "get_test_results",
+  "project_key": "MyProject",
+  "build_id": 500
+}
+```

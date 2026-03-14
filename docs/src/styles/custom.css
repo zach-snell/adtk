@@ -1,0 +1,21 @@
+/* Custom styles for adtk docs */
+
+:root {
+  --sl-color-accent-low: #1a3652;
+  --sl-color-accent: #0078d4;
+  --sl-color-accent-high: #60a5fa;
+}
+
+/* Code blocks */
+pre {
+  border-radius: 0.5rem;
+}
+
+/* Tables */
+table {
+  width: 100%;
+}
+
+th {
+  text-align: left;
+}

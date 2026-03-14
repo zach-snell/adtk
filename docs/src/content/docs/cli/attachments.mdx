@@ -1,0 +1,41 @@
+---
+title: adtk attachments
+description: Manage Azure DevOps work item attachments from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `attachments` command group (alias: `attach`) lets you list attachments on work items.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name |
+
+## list
+
+List all attachments on a work item.
+
+```bash
+adtk attachments list <work-item-id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk attach list 42 -p MyProject
+```
+
+```
+TYPE                        URL
+AttachedFile                https://dev.azure.com/myorg/.../_apis/wit/attachments/abc123
+AttachedFile                https://dev.azure.com/myorg/.../_apis/wit/attachments/def456
+
+2 attachments
+```
+
+If no attachments are found:
+
+```
+No attachments found
+```

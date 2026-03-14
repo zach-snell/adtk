@@ -1,0 +1,49 @@
+---
+title: MCP Tools Overview
+description: Overview of all 13 adtk MCP tools and their 82 actions
+---
+import { Aside } from '@astrojs/starlight/components';
+
+adtk exposes 13 MCP tools with 82 total actions for managing Azure DevOps resources. Tools are registered with a unified action-based pattern — each tool accepts an `action` parameter that determines the operation to perform.
+
+## Write Protection
+
+Write operations (create, update, delete, trigger) are disabled by default. Set the `ADTK_ENABLE_WRITES=true` environment variable to enable them. This prevents accidental modifications when used with AI agents.
+
+## Disabling Tools
+
+Set `AZURE_DEVOPS_DISABLED_TOOLS` to a comma-separated list of tool names to disable specific tools:
+
+```bash
+AZURE_DEVOPS_DISABLED_TOOLS="manage_wiki,manage_test_plans"
+```
+
+## Tools Reference
+
+| Tool | Actions | Description |
+|------|---------|-------------|
+| [`manage_work_items`](/mcp/manage-work-items/) | 18 | Work items: get, create, update, delete, comments, links, batch operations |
+| [`manage_search`](/mcp/manage-search/) | 4 | Search: WIQL, code, work items, wiki |
+| [`manage_repos`](/mcp/manage-repos/) | 7 | Repositories: list, get, branches, files, tree, commits, create branch |
+| [`manage_pull_requests`](/mcp/manage-pull-requests/) | 12 | Pull requests: CRUD, comments, threads, votes, reviewers |
+| [`manage_projects`](/mcp/manage-projects/) | 5 | Projects and teams: list, get, create |
+| [`manage_users`](/mcp/manage-users/) | 2 | Users: get current, search |
+| [`manage_iterations`](/mcp/manage-iterations/) | 5 | Iterations/sprints: list, get, create, team settings |
+| [`manage_boards`](/mcp/manage-boards/) | 3 | Kanban boards: list, get, columns |
+| [`manage_wiki`](/mcp/manage-wiki/) | 6 | Wiki pages: list, get, create, update, delete |
+| [`manage_pipelines`](/mcp/manage-pipelines/) | 9 | Pipelines: list, get, runs, trigger, logs, build changes |
+| [`manage_attachments`](/mcp/manage-attachments/) | 3 | Attachments: list, upload, download |
+| [`manage_test_plans`](/mcp/manage-test-plans/) | 6 | Test plans: plans, suites, cases, results |
+| [`manage_advanced_security`](/mcp/manage-advanced-security/) | 2 | Advanced Security: list alerts, get alert |
+
+## Read vs Write Actions
+
+<Aside type="note">
+Actions labeled with "Write" in their documentation require `ADTK_ENABLE_WRITES=true`. Read-only actions are always available.
+</Aside>
+
+### Always available (read-only)
+`get`, `list`, `batch_get`, `list_types`, `get_links`, `get_history`, `list_comments`, `my_items`, `iteration_items`, `search`, `list_branches`, `get_file`, `get_tree`, `search_commits`, `list_reviewers`, `list_comments`, `get_current`, `get_team_settings`, `get_columns`, `get_page`, `list_pages`, `get_run`, `get_logs`, `get_log`, `get_build_changes`, `list_definitions`, `list_plans`, `list_suites`, `list_cases`, `get_test_results`, `list_alerts`, `get_alert`, `download`
+
+### Requires ADTK_ENABLE_WRITES=true
+`create`, `update`, `delete`, `add_comment`, `update_comment`, `batch_update`, `add_children`, `link`, `unlink`, `add_artifact_link`, `create_branch`, `create` (PR), `update` (PR), `add_comment` (PR), `vote`, `update_reviewers`, `create_thread`, `update_thread`, `reply_to_comment`, `create` (iteration), `create_page`, `update_page`, `delete_page`, `trigger`, `create_plan`, `create_suite`, `upload`

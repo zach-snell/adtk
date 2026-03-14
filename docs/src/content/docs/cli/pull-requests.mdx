@@ -1,0 +1,89 @@
+---
+title: adtk pull-requests
+description: Manage Azure DevOps pull requests from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `pull-requests` command group (aliases: `pr`, `prs`) lets you list, inspect, and review pull requests.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name |
+
+## list
+
+List pull requests for a repository.
+
+```bash
+adtk pull-requests list <repo> [--project myproject] [--status active] [--top 25]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--status` | `active` | Filter by status: `active`, `completed`, `abandoned`, `all` |
+| `--top` | `25` | Max results to return |
+
+**Example:**
+
+```bash
+adtk pr list backend-api -p MyProject --status active
+```
+
+```
+ID    TITLE                                     STATUS  SOURCE                    TARGET               AUTHOR
+101   Add user authentication                   active  refs/heads/feature/auth   refs/heads/main      Jane Doe
+102   Fix database connection pooling            active  refs/heads/fix/db-pool    refs/heads/main      John Smith
+
+2 pull requests
+```
+
+## get
+
+Get detailed information about a specific pull request.
+
+```bash
+adtk pull-requests get <repo> <pr-id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk pr get backend-api 101 -p MyProject
+```
+
+```
+  ID:             101
+  Title:          Add user authentication
+  Status:         active
+  Source:         refs/heads/feature/auth
+  Target:         refs/heads/main
+  Author:         Jane Doe
+  Created:        2025-01-15 10:30
+  Draft:          no
+  Merge Status:   succeeded
+
+  Implements OAuth2 login flow with refresh token support.
+```
+
+## reviewers
+
+List reviewers on a pull request with their vote status.
+
+```bash
+adtk pull-requests reviewers <repo> <pr-id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk pr reviewers backend-api 101 -p MyProject
+```
+
+```
+NAME            VOTE                        REQUIRED
+John Smith      Approved                    yes
+Alice Johnson   Approved with suggestions   no
+Bob Wilson      No vote                     no
+```

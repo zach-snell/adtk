@@ -1,0 +1,101 @@
+---
+title: manage_pipelines
+description: MCP tool for managing Azure DevOps CI/CD pipelines
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, trigger builds, retrieve logs, and view build changes.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List pipeline definitions | `project_key` | `top` | No |
+| `get` | Get pipeline details | `project_key`, `pipeline_id` | | No |
+| `list_runs` | List runs for a pipeline | `project_key`, `pipeline_id` | `top` | No |
+| `get_run` | Get run details | `project_key`, `pipeline_id`, `run_id` | | No |
+| `trigger` | Trigger a pipeline run | `project_key`, `pipeline_id` | `branch` | Yes |
+| `get_logs` | Get log listing for a run | `project_key`, `pipeline_id`, `run_id` | | No |
+| `get_log` | Get a specific log entry | `project_key`, `pipeline_id`, `run_id`, `log_id` | | No |
+| `get_build_changes` | Get changes associated with a build | `project_key`, `build_id` | | No |
+| `list_definitions` | List build definitions | `project_key` | | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | **Required.** Project name |
+| `pipeline_id` | integer | Pipeline ID (required for get, list_runs, trigger, get_logs, get_log) |
+| `run_id` | integer | Run ID (required for get_run, get_logs, get_log) |
+| `log_id` | integer | Log ID (required for get_log) |
+| `build_id` | integer | Build ID (required for get_build_changes) |
+| `branch` | string | Branch name to run pipeline on (for trigger) |
+| `top` | integer | Max results to return |
+
+## Examples
+
+### List pipelines
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject",
+  "top": 50
+}
+```
+
+### Get recent runs for a pipeline
+
+```json
+{
+  "action": "list_runs",
+  "project_key": "MyProject",
+  "pipeline_id": 1,
+  "top": 10
+}
+```
+
+### Trigger a pipeline on a branch
+
+```json
+{
+  "action": "trigger",
+  "project_key": "MyProject",
+  "pipeline_id": 1,
+  "branch": "feature/auth"
+}
+```
+
+### Get logs for a run
+
+```json
+{
+  "action": "get_logs",
+  "project_key": "MyProject",
+  "pipeline_id": 1,
+  "run_id": 100
+}
+```
+
+### Get a specific log entry
+
+```json
+{
+  "action": "get_log",
+  "project_key": "MyProject",
+  "pipeline_id": 1,
+  "run_id": 100,
+  "log_id": 3
+}
+```
+
+### Get build changes
+
+```json
+{
+  "action": "get_build_changes",
+  "project_key": "MyProject",
+  "build_id": 500
+}
+```

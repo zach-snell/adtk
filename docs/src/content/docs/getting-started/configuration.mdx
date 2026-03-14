@@ -1,0 +1,182 @@
+---
+title: Configuration
+description: Configure authentication, environment variables, and MCP client integration.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Authentication
+
+adtk uses Personal Access Tokens (PATs) for authentication. PATs are self-service — no Azure AD admin approval required.
+
+### Create a PAT
+
+1. Go to your Azure DevOps organization: `https://dev.azure.com/{your-org}`
+2. Click your profile icon (top right) → **Personal access tokens**
+3. Click **New Token**
+4. Give it a name and select the scopes you need (see [PAT Scopes](#pat-scopes) below)
+5. Copy the generated token
+
+### Interactive Auth
+
+The simplest way to configure auth:
+
+```bash
+adtk auth
+```
+
+This prompts for your organization name and PAT, then stores them locally.
+
+### Environment Variables
+
+For CI/CD, containers, or MCP server mode, use environment variables:
+
+```bash
+export AZURE_DEVOPS_ORG=myorg
+export AZURE_DEVOPS_PAT=your-pat-here
+```
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `AZURE_DEVOPS_ORG` | Yes | Azure DevOps organization name (the `{org}` in `dev.azure.com/{org}`) |
+| `AZURE_DEVOPS_PAT` | Yes | Personal Access Token |
+| `ADTK_ENABLE_WRITES` | No | Set to `true` to enable write operations (create, update, delete, trigger). Default: `false` (read-only) |
+| `AZURE_DEVOPS_DISABLED_TOOLS` | No | Comma-separated list of MCP tools to disable (e.g., `manage_wiki,manage_pipelines`) |
+
+<Aside type="caution">
+By default, all write operations are disabled. You must explicitly set `ADTK_ENABLE_WRITES=true` to enable create, update, delete, and trigger actions. This is a safety mechanism to prevent accidental modifications.
+</Aside>
+
+## How PAT Auth Works
+
+Azure DevOps uses HTTP Basic Authentication with an empty username and the PAT as the password:
+
+```
+Authorization: Basic base64(":" + pat)
+```
+
+For example, if your PAT is `abc123`, the header becomes:
+
+```
+Authorization: Basic OmFiYzEyMw==
+```
+
+adtk handles this encoding automatically — just provide the raw PAT.
+
+## PAT Scopes
+
+Recommended PAT scopes for full functionality:
+
+| Scope | Required For |
+|---|---|
+| **Work Items** (Read & Write) | Work items, comments, links |
+| **Code** (Read & Write) | Repositories, branches, file content |
+| **Pull Request Threads** (Read & Write) | PR comments, threads, votes |
+| **Build** (Read & Execute) | Pipelines, runs, logs, triggering |
+| **Wiki** (Read & Write) | Wiki pages |
+| **Project and Team** (Read) | Projects, teams |
+| **Identity** (Read) | User search, current user |
+| **Test Management** (Read & Write) | Test plans, suites, cases |
+| **Advanced Security** (Read) | Security alerts |
+
+<Aside type="tip">
+For read-only usage, you can create a PAT with only Read scopes. Write scopes are only needed when `ADTK_ENABLE_WRITES=true`.
+</Aside>
+
+## MCP Client Configuration
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%/Claude/claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "command": "adtk",
+      "args": ["mcp"],
+      "env": {
+        "AZURE_DEVOPS_ORG": "myorg",
+        "AZURE_DEVOPS_PAT": "your-pat-here",
+        "ADTK_ENABLE_WRITES": "true"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root or `~/.cursor/mcp.json` globally:
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "command": "adtk",
+      "args": ["mcp"],
+      "env": {
+        "AZURE_DEVOPS_ORG": "myorg",
+        "AZURE_DEVOPS_PAT": "your-pat-here",
+        "ADTK_ENABLE_WRITES": "true"
+      }
+    }
+  }
+}
+```
+
+### Claude Code (CLI)
+
+Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "command": "adtk",
+      "args": ["mcp"],
+      "env": {
+        "AZURE_DEVOPS_ORG": "myorg",
+        "AZURE_DEVOPS_PAT": "your-pat-here",
+        "ADTK_ENABLE_WRITES": "true"
+      }
+    }
+  }
+}
+```
+
+### OpenCode
+
+Add to your OpenCode configuration:
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "command": "adtk",
+      "args": ["mcp"],
+      "env": {
+        "AZURE_DEVOPS_ORG": "myorg",
+        "AZURE_DEVOPS_PAT": "your-pat-here",
+        "ADTK_ENABLE_WRITES": "true"
+      }
+    }
+  }
+}
+```
+
+### HTTP Streamable Mode
+
+For shared/remote deployments, adtk can run as an HTTP MCP server:
+
+```bash
+AZURE_DEVOPS_ORG=myorg AZURE_DEVOPS_PAT=your-pat adtk mcp --port 8080
+```
+
+Then configure your MCP client to connect to `http://localhost:8080/mcp`.
+
+## Next Steps
+
+- [Quick Start](/adtk/getting-started/quickstart/) — Run your first commands

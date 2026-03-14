@@ -1,0 +1,191 @@
+---
+title: WIQL Guide
+description: Master the Work Item Query Language for Azure DevOps searches.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+WIQL (Work Item Query Language) is SQL-like query language used by Azure DevOps to search and filter work items. adtk supports WIQL through both the CLI and MCP.
+
+## Basic Syntax
+
+```sql
+SELECT [Field1], [Field2]
+FROM WorkItems
+WHERE [Condition]
+ORDER BY [Field] ASC|DESC
+```
+
+<Aside type="note">
+Field names must be enclosed in square brackets, e.g., `[System.Title]`. adtk's response flattener will convert these to readable names like `title` in the output.
+</Aside>
+
+## Running WIQL Queries
+
+### CLI
+
+```bash
+adtk search wiql "SELECT [System.Id], [System.Title] FROM WorkItems WHERE [System.State] = 'Active'"
+```
+
+### MCP
+
+```
+Tool: manage_search
+Input: {
+  "action": "wiql",
+  "query": "SELECT [System.Id], [System.Title] FROM WorkItems WHERE [System.State] = 'Active'",
+  "project_key": "MyProject"
+}
+```
+
+## Common Fields
+
+| WIQL Field | Flattened Name | Description |
+|---|---|---|
+| `[System.Id]` | `id` | Work item ID |
+| `[System.Title]` | `title` | Title |
+| `[System.State]` | `state` | State (New, Active, Closed, etc.) |
+| `[System.WorkItemType]` | `work_item_type` | Type (Bug, Task, User Story, etc.) |
+| `[System.AssignedTo]` | `assigned_to` | Assigned user |
+| `[System.CreatedDate]` | `created_date` | Creation timestamp |
+| `[System.ChangedDate]` | `changed_date` | Last modified timestamp |
+| `[System.CreatedBy]` | `created_by` | Creator |
+| `[System.AreaPath]` | `area_path` | Area path |
+| `[System.IterationPath]` | `iteration_path` | Iteration/sprint path |
+| `[System.Tags]` | `tags` | Tags |
+| `[Microsoft.VSTS.Common.Priority]` | `priority` | Priority (1-4) |
+| `[Microsoft.VSTS.Scheduling.StoryPoints]` | `story_points` | Story points estimate |
+| `[Microsoft.VSTS.Common.StateChangeDate]` | `state_change_date` | When state last changed |
+
+## Query Examples
+
+### Active items assigned to me
+
+```sql
+SELECT [System.Id], [System.Title], [System.State]
+FROM WorkItems
+WHERE [System.State] = 'Active'
+  AND [System.AssignedTo] = @Me
+ORDER BY [System.ChangedDate] DESC
+```
+
+### All bugs by priority
+
+```sql
+SELECT [System.Id], [System.Title], [Microsoft.VSTS.Common.Priority]
+FROM WorkItems
+WHERE [System.WorkItemType] = 'Bug'
+  AND [System.State] <> 'Closed'
+ORDER BY [Microsoft.VSTS.Common.Priority] ASC
+```
+
+### Items changed in the last 7 days
+
+```sql
+SELECT [System.Id], [System.Title], [System.ChangedDate]
+FROM WorkItems
+WHERE [System.ChangedDate] >= @Today - 7
+ORDER BY [System.ChangedDate] DESC
+```
+
+### Items in the current iteration
+
+```sql
+SELECT [System.Id], [System.Title], [System.State]
+FROM WorkItems
+WHERE [System.IterationPath] = @CurrentIteration
+  AND [System.WorkItemType] <> 'Task'
+ORDER BY [Microsoft.VSTS.Common.Priority] ASC
+```
+
+### Unassigned high-priority items
+
+```sql
+SELECT [System.Id], [System.Title], [System.WorkItemType]
+FROM WorkItems
+WHERE [System.AssignedTo] = ''
+  AND [Microsoft.VSTS.Common.Priority] <= 2
+  AND [System.State] = 'New'
+```
+
+### Items by tag
+
+```sql
+SELECT [System.Id], [System.Title]
+FROM WorkItems
+WHERE [System.Tags] CONTAINS 'frontend'
+  AND [System.State] <> 'Closed'
+```
+
+### Parent-child hierarchy (tree query)
+
+```sql
+SELECT [System.Id], [System.Title], [System.WorkItemType]
+FROM WorkItemLinks
+WHERE [Source].[System.WorkItemType] = 'User Story'
+  AND [Target].[System.WorkItemType] = 'Task'
+  AND [System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward'
+MODE (Recursive)
+```
+
+### Items created by a specific user
+
+```sql
+SELECT [System.Id], [System.Title], [System.CreatedDate]
+FROM WorkItems
+WHERE [System.CreatedBy] = 'Jane Doe'
+  AND [System.CreatedDate] >= @Today - 30
+ORDER BY [System.CreatedDate] DESC
+```
+
+### Items in a specific area path
+
+```sql
+SELECT [System.Id], [System.Title], [System.State]
+FROM WorkItems
+WHERE [System.AreaPath] UNDER 'MyProject\Backend'
+ORDER BY [System.Id] ASC
+```
+
+## Operators
+
+| Operator | Description | Example |
+|---|---|---|
+| `=` | Equals | `[System.State] = 'Active'` |
+| `<>` | Not equals | `[System.State] <> 'Closed'` |
+| `>`, `<`, `>=`, `<=` | Comparison | `[Microsoft.VSTS.Common.Priority] <= 2` |
+| `CONTAINS` | Contains substring | `[System.Tags] CONTAINS 'api'` |
+| `NOT CONTAINS` | Does not contain | `[System.Title] NOT CONTAINS 'test'` |
+| `IN` | In a set | `[System.State] IN ('Active', 'New')` |
+| `NOT IN` | Not in a set | `[System.WorkItemType] NOT IN ('Task', 'Test Case')` |
+| `UNDER` | Under a path (hierarchical) | `[System.AreaPath] UNDER 'Project\Team'` |
+| `=''` | Is empty | `[System.AssignedTo] = ''` |
+| `<>''` | Is not empty | `[System.AssignedTo] <> ''` |
+
+## Macros
+
+| Macro | Description |
+|---|---|
+| `@Me` | Current authenticated user |
+| `@Today` | Today's date (can do arithmetic: `@Today - 7`) |
+| `@CurrentIteration` | The current sprint/iteration |
+| `@Project` | Current project context |
+
+## How adtk Processes WIQL
+
+adtk uses the **WIQL 2-step pattern**:
+
+1. **Execute the query** — POST the WIQL to the ADO API, which returns a list of work item IDs
+2. **Batch fetch** — GET the full work items by ID in batches of up to 200
+
+This is more efficient than fetching full work items inline, especially for large result sets.
+
+```bash
+# Limit results with the --top flag
+adtk search wiql "SELECT [System.Id] FROM WorkItems WHERE [System.State] = 'Active'" --top 10
+```
+
+<Aside type="tip">
+The `top` parameter limits results at the WIQL query level, reducing the number of work items that need to be batch-fetched. Use it for performance on large backlogs.
+</Aside>

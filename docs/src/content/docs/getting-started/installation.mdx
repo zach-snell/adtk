@@ -1,0 +1,80 @@
+---
+title: Installation
+description: Install adtk from source, via go install, or with pre-built binaries.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Prerequisites
+
+- **Go 1.26+** (for building from source or `go install`)
+- An Azure DevOps organization and a [Personal Access Token (PAT)](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate)
+
+## go install (Recommended)
+
+The fastest way to install adtk:
+
+```bash
+go install github.com/zach-snell/adtk/cmd/adtk@latest
+```
+
+This installs the `adtk` binary to `$GOPATH/bin` (or `$HOME/go/bin` by default). Ensure this directory is in your `PATH`.
+
+## Build from Source
+
+```bash
+git clone https://github.com/zach-snell/adtk.git
+cd adtk
+./install.sh
+```
+
+The install script builds the binary with version info embedded and places it in `~/.local/bin/`. Make sure this directory is in your `PATH`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Manual Build
+
+If you prefer to control the build process:
+
+```bash
+git clone https://github.com/zach-snell/adtk.git
+cd adtk
+go build -o adtk ./cmd/adtk
+```
+
+Move the resulting binary anywhere on your `PATH`.
+
+## Pre-built Binaries
+
+Pre-built binaries for all platforms are available on the [GitHub Releases](https://github.com/zach-snell/adtk/releases) page.
+
+| Platform | Architecture | Filename |
+|---|---|---|
+| Linux | amd64 | `adtk-linux-amd64` |
+| Linux | arm64 | `adtk-linux-arm64` |
+| macOS | amd64 (Intel) | `adtk-darwin-amd64` |
+| macOS | arm64 (Apple Silicon) | `adtk-darwin-arm64` |
+| Windows | amd64 | `adtk-windows-amd64.exe` |
+
+```bash
+# Example: download for macOS Apple Silicon
+curl -LO https://github.com/zach-snell/adtk/releases/latest/download/adtk-darwin-arm64
+chmod +x adtk-darwin-arm64
+mv adtk-darwin-arm64 ~/.local/bin/adtk
+```
+
+## Verify Installation
+
+```bash
+adtk --version
+```
+
+<Aside type="tip">
+adtk is a statically compiled Go binary with zero runtime dependencies. No Node.js, Python, Java, or Docker required.
+</Aside>
+
+## Next Steps
+
+- [Configuration](/adtk/getting-started/configuration/) — Set up authentication and MCP client config

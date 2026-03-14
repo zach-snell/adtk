@@ -1,0 +1,62 @@
+---
+title: adtk auth
+description: Authenticate with Azure DevOps, check status, and log out
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `auth`, `status`, and `logout` commands manage your Azure DevOps credentials. Credentials are stored locally in a config file and used by all other commands and the MCP server.
+
+<Aside type="tip">
+You can also authenticate via environment variables `AZURE_DEVOPS_ORG` and `AZURE_DEVOPS_PAT` instead of using `adtk auth`.
+</Aside>
+
+## auth
+
+Interactive login that prompts for your organization name and Personal Access Token (PAT).
+
+```bash
+adtk auth
+```
+
+You will need:
+1. Your Azure DevOps organization name (e.g. `myorg` for `dev.azure.com/myorg`)
+2. A Personal Access Token from `https://dev.azure.com/{org}/_usersSettings/tokens`
+
+## status
+
+Show the current authentication status, including organization, URL, and credential source.
+
+```bash
+adtk status
+```
+
+**Example output:**
+
+```
+Authenticated via stored credentials
+  Organization:   myorg
+  URL:            https://dev.azure.com/myorg
+  PAT:            abcd...wxyz
+  Saved:          2025-01-15 10:30:00
+  File:           /home/user/.config/adtk/credentials.json
+```
+
+If authenticated via environment variables:
+
+```
+Authenticated via environment variables
+  Organization: myorg
+  URL:          https://dev.azure.com/myorg
+```
+
+## logout
+
+Remove stored credentials from the local config file.
+
+```bash
+adtk logout
+```
+
+```
+Logged out. Credentials removed.
+```

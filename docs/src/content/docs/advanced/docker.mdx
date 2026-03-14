@@ -1,0 +1,124 @@
+---
+title: Docker Deployment
+description: Run adtk as a containerized MCP server with Docker.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Dockerfile
+
+Since adtk is a statically compiled Go binary, the Docker image is minimal:
+
+```dockerfile
+# Build stage
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -o /adtk ./cmd/adtk
+
+# Runtime stage
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /adtk /adtk
+
+ENTRYPOINT ["/adtk"]
+CMD ["mcp"]
+```
+
+<Aside type="tip">
+The `scratch` base image produces a container with only the adtk binary and CA certificates — nothing else. The resulting image is approximately 15 MB.
+</Aside>
+
+## Build and Run
+
+```bash
+# Build the image
+docker build -t adtk .
+
+# Run in stdio mode (for piping to MCP clients)
+docker run -i --rm \
+  -e AZURE_DEVOPS_ORG=myorg \
+  -e AZURE_DEVOPS_PAT=your-pat-here \
+  adtk mcp
+
+# Run in HTTP mode
+docker run -d --rm \
+  -p 8080:8080 \
+  -e AZURE_DEVOPS_ORG=myorg \
+  -e AZURE_DEVOPS_PAT=your-pat-here \
+  --name adtk-server \
+  adtk mcp --port 8080
+```
+
+## Docker Compose
+
+For a persistent MCP server deployment:
+
+```yaml
+version: '3.8'
+
+services:
+  adtk:
+    build: .
+    container_name: adtk-mcp
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      AZURE_DEVOPS_ORG: ${AZURE_DEVOPS_ORG}
+      AZURE_DEVOPS_PAT: ${AZURE_DEVOPS_PAT}
+      ADTK_ENABLE_WRITES: ${ADTK_ENABLE_WRITES:-false}
+      AZURE_DEVOPS_DISABLED_TOOLS: ${AZURE_DEVOPS_DISABLED_TOOLS:-}
+    command: ["mcp", "--port", "8080"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+```
+
+Create a `.env` file alongside:
+
+```bash
+AZURE_DEVOPS_ORG=myorg
+AZURE_DEVOPS_PAT=your-pat-here
+ADTK_ENABLE_WRITES=false
+```
+
+Then run:
+
+```bash
+docker compose up -d
+```
+
+## Using with MCP Clients
+
+Once the HTTP server is running, configure your MCP client to connect:
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+## Security Considerations
+
+<Aside type="caution">
+Never bake your PAT into the Docker image. Always pass it via environment variables at runtime.
+</Aside>
+
+- Use Docker secrets or a secrets manager for PAT storage in production
+- Run the container as a non-root user if deploying beyond local development
+- Restrict network access to the HTTP port as needed
+- Set `ADTK_ENABLE_WRITES=false` unless write access is explicitly needed

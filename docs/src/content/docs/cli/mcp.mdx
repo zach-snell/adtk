@@ -1,0 +1,69 @@
+---
+title: adtk mcp
+description: Start the Azure DevOps MCP server via stdio or HTTP
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `mcp` command starts the Model Context Protocol (MCP) server for Azure DevOps. This exposes all 13 MCP tools (82 actions) to AI agents and editors that support the MCP protocol.
+
+## Usage
+
+```bash
+# Start via stdio (default — for Claude Code, Cursor, etc.)
+adtk mcp
+
+# Start via HTTP Streamable transport on a specific port
+adtk mcp --port 8080
+```
+
+## Flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--port` | `-p` | `0` | Port for HTTP Streamable transport. When `0`, runs on stdio. |
+
+## Transport Modes
+
+### stdio (default)
+
+Used by Claude Code, Cursor, Windsurf, and most MCP clients. Configure in your client's MCP config:
+
+```json
+{
+  "mcpServers": {
+    "adtk": {
+      "command": "adtk",
+      "args": ["mcp"],
+      "env": {
+        "AZURE_DEVOPS_ORG": "your-org",
+        "AZURE_DEVOPS_PAT": "your-pat"
+      }
+    }
+  }
+}
+```
+
+### HTTP Streamable
+
+For network-accessible deployments or clients that support HTTP-based MCP:
+
+```bash
+adtk mcp --port 3000
+```
+
+```
+Starting Azure DevOps MCP Server on :3000 (HTTP Streamable)
+```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `AZURE_DEVOPS_ORG` | Organization name (alternative to `adtk auth`) |
+| `AZURE_DEVOPS_PAT` | Personal Access Token (alternative to `adtk auth`) |
+| `ADTK_ENABLE_WRITES` | Set to `true` to enable write operations (create, update, delete) |
+| `AZURE_DEVOPS_DISABLED_TOOLS` | Comma-separated list of tool names to disable |
+
+<Aside type="caution">
+Write operations (create, update, delete, trigger) are disabled by default. Set `ADTK_ENABLE_WRITES=true` to enable them.
+</Aside>

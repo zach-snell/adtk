@@ -1,0 +1,63 @@
+---
+title: adtk test-plans
+description: Manage Azure DevOps test plans, suites, and cases from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `test-plans` command group (alias: `tp`) lets you list and inspect test plans, test suites, test cases, and test results.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name (required) |
+
+## list
+
+List all test plans in a project. Outputs raw JSON.
+
+```bash
+adtk test-plans list --project MyProject
+```
+
+## suites
+
+List test suites within a test plan. Outputs raw JSON.
+
+```bash
+adtk test-plans suites <plan-id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk tp suites 1 -p MyProject
+```
+
+## cases
+
+List test cases within a test suite. Outputs raw JSON.
+
+```bash
+adtk test-plans cases <plan-id> <suite-id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk tp cases 1 100 -p MyProject
+```
+
+## results
+
+Get test results for a specific build. Outputs raw JSON.
+
+```bash
+adtk test-plans results <build-id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk tp results 500 -p MyProject
+```

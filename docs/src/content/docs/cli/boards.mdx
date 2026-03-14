@@ -1,0 +1,52 @@
+---
+title: adtk boards
+description: Manage Azure DevOps Kanban boards from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `boards` command group lets you list Kanban boards and inspect their column configuration.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name (required) |
+| `--team` | `-t` | Team name (optional) |
+
+## list
+
+List all boards for a project or team.
+
+```bash
+adtk boards list --project MyProject [--team "My Team"]
+```
+
+```
+ID                                     NAME
+a1b2c3d4-e5f6-7890-abcd-ef1234567890   Stories
+b2c3d4e5-f6a7-8901-bcde-f12345678901   Bugs
+
+2 boards
+```
+
+## columns
+
+List columns on a specific board.
+
+```bash
+adtk boards columns <board> --project MyProject [--team "My Team"]
+```
+
+**Example:**
+
+```bash
+adtk boards columns Stories -p MyProject
+```
+
+```
+NAME            ITEM LIMIT   COLUMN TYPE
+New             -            incoming
+Active          5            inProgress
+Resolved        3            inProgress
+Closed          -            outgoing
+```

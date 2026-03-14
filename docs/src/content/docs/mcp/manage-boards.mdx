@@ -1,0 +1,56 @@
+---
+title: manage_boards
+description: MCP tool for managing Azure DevOps Kanban boards
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps Kanban boards. List boards, get board details, and retrieve column configurations.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List boards for a project/team | `project_key` | `team` | No |
+| `get` | Get board details | `project_key`, `board_id` | `team` | No |
+| `get_columns` | Get column configuration for a board | `project_key`, `board_id` | `team` | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `list`, `get`, `get_columns` |
+| `project_key` | string | **Required.** Project name |
+| `team` | string | Team name (optional, scopes to a specific team) |
+| `board_id` | string | Board name or ID (required for `get`, `get_columns`) |
+
+## Examples
+
+### List boards
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject"
+}
+```
+
+### Get board details
+
+```json
+{
+  "action": "get",
+  "project_key": "MyProject",
+  "board_id": "Stories"
+}
+```
+
+### Get board columns
+
+```json
+{
+  "action": "get_columns",
+  "project_key": "MyProject",
+  "board_id": "Stories",
+  "team": "Backend Team"
+}
+```

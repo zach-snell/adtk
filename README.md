@@ -1,43 +1,70 @@
-# adtk - Azure DevOps Toolkit
+# adtk — Azure DevOps Toolkit
 
-A unified CLI and MCP (Model Context Protocol) server for Azure DevOps. Single Go binary, PAT-first auth, no admin approval required.
+[![CI](https://github.com/zach-snell/adtk/actions/workflows/ci.yml/badge.svg)](https://github.com/zach-snell/adtk/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/zach-snell/adtk)](https://goreportcard.com/report/github.com/zach-snell/adtk)
+[![Docs](https://img.shields.io/badge/docs-starlight-blue)](https://zach-snell.github.io/adtk)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+
+A dual-mode Go CLI & MCP server for Azure DevOps. Single binary, PAT-first auth, 13 MCP tools with 82 actions.
+
+> **The most comprehensive Azure DevOps MCP server.** A single Go binary — CLI for humans, MCP for AI agents.
+
+## Comparison: adtk vs Microsoft azure-devops-mcp
+
+| Feature | adtk | microsoft/azure-devops-mcp |
+|---------|------|---------------------------|
+| **Language** | Go (single static binary) | TypeScript (Node.js) |
+| **MCP Tools / Actions** | 13 tools / 82 actions | ~75 individual tools |
+| **CLI mode** | Full CLI with 15 command groups | No |
+| **Auth** | PAT (self-service, no admin) | Azure AD (requires admin consent) |
+| **Startup** | ~50ms | ~2s |
+| **Response flattening** | `System.Title` → `title` | Raw API responses |
+| **Boards & Iterations** | Full support | No |
+| **Test Plans** | Full support | No |
+| **Advanced Security** | Alert listing & details | No |
+| **Attachments** | Upload, download, list | No |
+| **Write protection** | `ADTK_ENABLE_WRITES` gate | None |
+| **Rate limiting** | Built-in token bucket | None |
+| **Binary size** | ~15 MB | `npm install` (~200+ MB) |
 
 ## Features
 
-- **Dual-mode**: Use as a CLI tool or MCP server for AI agents
-- **PAT-first auth**: Self-service Personal Access Tokens — no Azure AD admin approval needed
-- **Single binary**: No Node.js, Python, or Docker required
-- **11 consolidated MCP tools** covering work items, repos, PRs, pipelines, boards, wiki, and more
-- **Full CLI** with table-formatted output and `--json` flag
-- **Response flattening**: Strips `_links` and converts `System.` field prefixes to readable names
-- **Rate limiting**: Built-in token bucket respecting ADO's TSTU-based limits
-- **Write protection**: Write operations gated behind `ADTK_ENABLE_WRITES=true`
+- **Dual-mode** — Full CLI with table output + MCP server for AI agents
+- **13 consolidated MCP tools** with 82 actions covering every Azure DevOps domain
+- **PAT-first auth** — Self-service Personal Access Tokens, no Azure AD admin approval
+- **Single binary** — No Node.js, Python, or Docker required
+- **Response flattening** — Strips `_links` and converts `System.*` fields to readable names
+- **Write protection** — All mutations gated behind `ADTK_ENABLE_WRITES=true`
+- **Rate limiting** — Built-in token bucket respecting Azure DevOps TSTU limits
+- **Token-optimized** — AI agents get clean, concise payloads (40-60% fewer tokens)
 
-## Quick Start
+## Installation
 
-### Install
+### go install
 
 ```bash
 go install github.com/zach-snell/adtk/cmd/adtk@latest
 ```
 
-Or build from source:
+### Build from source
 
 ```bash
 git clone https://github.com/zach-snell/adtk.git
 cd adtk
-go build -o adtk ./cmd/adtk
+./install.sh
 ```
+
+### Pre-built binaries
+
+Download from the [Releases](https://github.com/zach-snell/adtk/releases) page.
+
+## Quick Start
 
 ### Authenticate
 
 ```bash
 adtk auth
-```
-
-Or use environment variables:
-
-```bash
+# Or use environment variables:
 export AZURE_DEVOPS_ORG=myorg
 export AZURE_DEVOPS_PAT=your-pat-here
 ```
@@ -45,33 +72,29 @@ export AZURE_DEVOPS_PAT=your-pat-here
 ### CLI Usage
 
 ```bash
-# Projects & teams
+# Projects
 adtk projects list
 adtk projects get MyProject
 adtk projects teams MyProject
 
 # Work items
-adtk work-items list -p MyProject
 adtk work-items get 42
-adtk work-items types -p MyProject
+adtk work-items list -p MyProject
 
 # Repositories
 adtk repos list -p MyProject
-adtk repos get myrepo -p MyProject
 adtk repos branches myrepo -p MyProject
 adtk repos tree myrepo /src -p MyProject
 
 # Pull requests
 adtk pull-requests list myrepo -p MyProject
 adtk pull-requests get myrepo 1
-adtk pull-requests reviewers myrepo 1
 
 # Pipelines
 adtk pipelines list -p MyProject
 adtk pipelines runs 42 -p MyProject
 
 # Iterations & boards
-adtk iterations list -p MyProject
 adtk iterations current -p MyProject
 adtk boards list -p MyProject
 adtk boards columns Stories -p MyProject
@@ -85,44 +108,36 @@ adtk search code "func main" -p MyProject
 adtk search work-items "login bug" -p MyProject
 adtk search wiql "SELECT [System.Id] FROM WorkItems WHERE [System.State] = 'Active'"
 
+# Test plans
+adtk test-plans list -p MyProject
+
+# Security alerts
+adtk security alerts myrepo -p MyProject
+
 # Attachments
 adtk attachments list 42 -p MyProject
 
-# All commands support --json for raw JSON output
+# All commands support --json for raw output
 adtk projects list --json
 ```
 
-### MCP Server
+## MCP Server
+
+### stdio mode (for AI agents)
 
 ```bash
-# stdio mode (for AI agents)
 adtk mcp
+```
 
-# HTTP Streamable mode
+### HTTP Streamable mode
+
+```bash
 adtk mcp --port 8080
 ```
 
-## MCP Tools
+### MCP Client Configuration
 
-adtk exposes 11 MCP tools with 60+ actions:
-
-| Tool | Actions | Description |
-|------|---------|-------------|
-| `manage_work_items` | get, batch_get, create, update, delete, add_comment, list_comments, get_links, list_types, get_history | Full work item lifecycle |
-| `manage_projects` | list, get, list_teams, get_team, create | Projects and teams |
-| `manage_users` | get_current, search | Identity and user lookup |
-| `manage_search` | wiql, code, work_items, wiki | Multi-domain search |
-| `manage_repos` | list, get, list_branches, get_file, get_tree | Git repositories |
-| `manage_pull_requests` | list, get, create, update, add_comment, list_comments, vote, list_reviewers | Pull request management |
-| `manage_iterations` | list, get, get_current | Sprint/iteration tracking |
-| `manage_boards` | list, get, get_columns | Kanban board management |
-| `manage_wiki` | list, get_page, create_page, update_page, delete_page | Markdown-native wiki |
-| `manage_pipelines` | list, get, list_runs, get_run, trigger, get_logs, get_log | CI/CD pipeline management |
-| `manage_attachments` | list, upload, download | Work item attachments |
-
-## MCP Configuration
-
-Add to your MCP client configuration:
+**Claude Desktop / Cursor / Claude Code:**
 
 ```json
 {
@@ -132,7 +147,8 @@ Add to your MCP client configuration:
       "args": ["mcp"],
       "env": {
         "AZURE_DEVOPS_ORG": "myorg",
-        "AZURE_DEVOPS_PAT": "your-pat-here"
+        "AZURE_DEVOPS_PAT": "your-pat-here",
+        "ADTK_ENABLE_WRITES": "true"
       }
     }
   }
@@ -141,37 +157,83 @@ Add to your MCP client configuration:
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `AZURE_DEVOPS_ORG` | Azure DevOps organization name |
-| `AZURE_DEVOPS_PAT` | Personal Access Token |
-| `ADTK_ENABLE_WRITES` | Set to `true` to enable write operations (create, update, delete, etc.) |
-| `AZURE_DEVOPS_DISABLED_TOOLS` | Comma-separated list of tools to disable (e.g., `manage_wiki,manage_pipelines`) |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AZURE_DEVOPS_ORG` | Yes | Azure DevOps organization name |
+| `AZURE_DEVOPS_PAT` | Yes | Personal Access Token |
+| `ADTK_ENABLE_WRITES` | No | Set to `true` to enable write operations (default: `false`) |
+| `AZURE_DEVOPS_DISABLED_TOOLS` | No | Comma-separated list of tools to disable |
+
+## MCP Tools
+
+adtk exposes 13 MCP tools with 82 actions:
+
+| Tool | Actions | Description |
+|------|---------|-------------|
+| `manage_work_items` | get, batch_get, create, update, delete, add_comment, update_comment, list_comments, get_links, list_types, get_history, batch_update, add_children, link, unlink, add_artifact_link, my_items, iteration_items | Full work item lifecycle (18 actions) |
+| `manage_projects` | list, get, list_teams, get_team, create | Projects and teams (5 actions) |
+| `manage_users` | get_current, search | Identity and user lookup (2 actions) |
+| `manage_search` | wiql, code, work_items, wiki | Multi-domain search (4 actions) |
+| `manage_repos` | list, get, list_branches, get_file, get_tree, create_branch, search_commits | Git repositories (7 actions) |
+| `manage_pull_requests` | list, get, create, update, add_comment, list_comments, vote, list_reviewers, update_reviewers, create_thread, update_thread, reply_to_comment | Pull request management (12 actions) |
+| `manage_iterations` | list, get, get_current, create, get_team_settings | Sprint/iteration tracking (5 actions) |
+| `manage_boards` | list, get, get_columns | Kanban board management (3 actions) |
+| `manage_wiki` | list, get_page, list_pages, create_page, update_page, delete_page | Markdown-native wiki (6 actions) |
+| `manage_pipelines` | list, get, list_runs, get_run, trigger, get_logs, get_log, get_build_changes, list_definitions | CI/CD pipeline management (9 actions) |
+| `manage_test_plans` | list_plans, create_plan, list_suites, create_suite, list_cases, get_test_results | Test plan management (6 actions) |
+| `manage_advanced_security` | list_alerts, get_alert | Security alert management (2 actions) |
+| `manage_attachments` | list, upload, download | Work item attachments (3 actions) |
+
+## Security
+
+### Write Protection
+
+adtk is **read-only by default**. All create, update, delete, and trigger operations require:
+
+```bash
+export ADTK_ENABLE_WRITES=true
+```
+
+### PAT Auth
+
+Uses HTTP Basic Auth with empty username: `Authorization: Basic base64(":" + pat)`. No Azure AD admin consent required.
+
+### Rate Limiting
+
+Built-in token bucket rate limiter (30 tokens, refill 1/2s) prevents hitting Azure DevOps TSTU throttling limits.
 
 ## Architecture
 
-- **Custom HTTP client** — direct REST API calls, no third-party SDK
+- **Custom HTTP client** — Direct REST API calls, no third-party SDK
 - **Multi-base-URL routing** — `dev.azure.com`, `vssps.dev.azure.com`, `almsearch.dev.azure.com`, `vsrm.dev.azure.com`
-- **PAT auth** — `Authorization: Basic base64(":" + pat)` (empty username)
 - **JSON Patch** for work item writes — `Content-Type: application/json-patch+json`
-- **WIQL 2-step** — query IDs then batch fetch fields (max 200)
-- **Team-scoped APIs** — iterations/boards use `{project}/{team}` in URL
+- **WIQL 2-step** — Query IDs, then batch fetch fields (max 200 per request)
 - **Response flattener** — `System.Title` → `title`, `Microsoft.VSTS.Common.Priority` → `priority`
+- **ETag concurrency** — Wiki updates use `If-Match` headers for optimistic concurrency
+- **Team-scoped APIs** — Iterations/boards use `{project}/{team}` URL routing
 
-## Competitive Comparison
+## Development
 
-| Feature | adtk | microsoft/azure-devops-mcp | Tiberriver256 |
-|---------|------|---------------------------|---------------|
-| Auth | PAT (self-service) | Azure AD only (admin) | PAT |
-| CLI | Full CLI with 10 command groups | No | No |
-| Runtime | Go binary | Node.js | Node.js |
-| MCP Tools | 11 consolidated (60+ actions) | 82 tools | 35 tools |
-| Boards/Iterations | Yes | No | No |
-| Wiki | Yes (markdown-native) | Yes | Yes |
-| Attachments | Yes | No | No |
-| Write Protection | ADTK_ENABLE_WRITES gate | N/A | N/A |
-| Rate Limiting | Built-in token bucket | No | No |
+```bash
+# Build
+go build -o adtk ./cmd/adtk
+
+# Test
+go test -race ./...
+
+# Lint
+golangci-lint run ./...
+
+# Vulnerability check
+govulncheck ./...
+```
+
+See the [development guide](https://zach-snell.github.io/adtk/advanced/development/) for full details.
+
+## Documentation
+
+Full documentation: **[zach-snell.github.io/adtk](https://zach-snell.github.io/adtk)**
 
 ## License
 
-Apache 2.0 - see [LICENSE](LICENSE)
+Apache 2.0 — see [LICENSE](LICENSE)

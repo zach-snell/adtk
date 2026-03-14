@@ -1,0 +1,93 @@
+---
+title: manage_repos
+description: MCP tool for managing Azure DevOps Git repositories
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps Git repositories. List repos, browse branches, read files, navigate directory trees, search commits, and create branches.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List repositories in a project | | `project_key` | No |
+| `get` | Get repository details | `repo_id` | `project_key` | No |
+| `list_branches` | List branches for a repository | `repo_id` | `project_key` | No |
+| `get_file` | Get file content from a repository | `repo_id`, `file_path` | `project_key`, `version` | No |
+| `get_tree` | List files/directories in a repo path | `repo_id` | `project_key`, `file_path` | No |
+| `search_commits` | Search commits with filters | `repo_id` | `project_key`, `author`, `from_date`, `to_date` | No |
+| `create_branch` | Create a new branch | `repo_id`, `branch_name`, `source_branch` | `project_key` | Yes |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | Project name (required for most actions) |
+| `repo_id` | string | Repository name or ID (required for get, list_branches, get_file, get_tree) |
+| `file_path` | string | File path within the repo (for get_file, get_tree) |
+| `version` | string | Branch name or commit SHA (for get_file) |
+| `branch_name` | string | New branch name (required for create_branch) |
+| `source_branch` | string | Source branch to create from (required for create_branch) |
+| `author` | string | Filter commits by author (for search_commits) |
+| `from_date` | string | Filter commits from this date (for search_commits) |
+| `to_date` | string | Filter commits to this date (for search_commits) |
+
+## Examples
+
+### List repositories
+
+```json
+{
+  "action": "list",
+  "project_key": "MyProject"
+}
+```
+
+### Get file content
+
+```json
+{
+  "action": "get_file",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "file_path": "/src/main.go",
+  "version": "main"
+}
+```
+
+### Browse directory tree
+
+```json
+{
+  "action": "get_tree",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "file_path": "/src"
+}
+```
+
+### Search commits by author and date
+
+```json
+{
+  "action": "search_commits",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "author": "jane@example.com",
+  "from_date": "2025-01-01",
+  "to_date": "2025-01-31"
+}
+```
+
+### Create a branch
+
+```json
+{
+  "action": "create_branch",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "branch_name": "feature/new-api",
+  "source_branch": "main"
+}
+```

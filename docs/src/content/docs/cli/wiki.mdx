@@ -1,0 +1,76 @@
+---
+title: adtk wiki
+description: Manage Azure DevOps wiki pages from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `wiki` command group lets you list and read Azure DevOps wiki pages. Wikis in Azure DevOps are markdown-native.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name (required) |
+
+## list
+
+List all wikis in a project.
+
+```bash
+adtk wiki list --project MyProject
+```
+
+```
+ID                                     NAME              TYPE
+a1b2c3d4-e5f6-7890-abcd-ef1234567890   Project Wiki      projectWiki
+b2c3d4e5-f6a7-8901-bcde-f12345678901   Code Wiki         codeWiki
+
+2 wikis
+```
+
+## get
+
+Get a wiki page by its path. Displays the page content (markdown).
+
+```bash
+adtk wiki get <wiki-id> <page-path> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk wiki get "Project Wiki" /Home -p MyProject
+```
+
+```
+  Path:           /Home
+  ID:             1
+
+  # Welcome to the Project Wiki
+
+  This is the home page of the project wiki.
+```
+
+## pages
+
+List all pages in a wiki.
+
+```bash
+adtk wiki pages <wiki-id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk wiki pages "Project Wiki" -p MyProject
+```
+
+```
+ID    PATH                    ORDER   PARENT
+1     /Home                   0       no
+2     /Architecture           1       yes
+3     /Architecture/Backend   0       no
+4     /Architecture/Frontend  1       no
+
+4 pages
+```

@@ -1,0 +1,66 @@
+---
+title: adtk iterations
+description: Manage Azure DevOps iterations (sprints) from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `iterations` command group (aliases: `iter`, `sprints`) lets you list and inspect iterations (sprints) for your project and team.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name (required) |
+| `--team` | `-t` | Team name (optional, scopes to a specific team) |
+
+## list
+
+List all iterations for a project or team.
+
+```bash
+adtk iterations list --project MyProject [--team "My Team"]
+```
+
+**Example:**
+
+```bash
+adtk iter list -p MyProject
+```
+
+```
+NAME          PATH                          TIME FRAME   START        END
+Sprint 1      MyProject\Sprint 1            past         2025-01-01   2025-01-14
+Sprint 2      MyProject\Sprint 2            current      2025-01-15   2025-01-28
+Sprint 3      MyProject\Sprint 3            future       2025-01-29   2025-02-11
+
+3 iterations
+```
+
+## current
+
+Show the currently active iteration/sprint.
+
+```bash
+adtk iterations current --project MyProject [--team "My Team"]
+```
+
+**Example:**
+
+```bash
+adtk iter current -p MyProject
+```
+
+```
+  Name:           Sprint 2
+  Path:           MyProject\Sprint 2
+  Start:          2025-01-15
+  End:            2025-01-28
+```
+
+## settings
+
+Get team iteration settings. Outputs raw JSON.
+
+```bash
+adtk iterations settings --project MyProject [--team "My Team"]
+```

@@ -1,0 +1,43 @@
+---
+title: adtk CLI Overview
+description: Complete reference for all adtk CLI commands
+---
+import { Aside } from '@astrojs/starlight/components';
+
+adtk provides a full-featured command-line interface for Azure DevOps. All commands support a `--json` flag for raw JSON output, making them composable with other tools.
+
+## Authentication
+
+Before using any command, authenticate with `adtk auth` or set the `AZURE_DEVOPS_ORG` and `AZURE_DEVOPS_PAT` environment variables.
+
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output raw JSON instead of formatted tables |
+| `--version` | Print adtk version |
+
+## Command Groups
+
+| Command | Aliases | Description |
+|---------|---------|-------------|
+| [`auth`](/cli/auth/) | | Authenticate with Azure DevOps |
+| [`status`](/cli/auth/) | | Show current authentication status |
+| [`logout`](/cli/auth/) | | Log out and remove stored credentials |
+| [`mcp`](/cli/mcp/) | | Start the MCP server (stdio or HTTP) |
+| [`work-items`](/cli/work-items/) | `wi` | Manage work items (get, list, types, my, comments) |
+| [`repos`](/cli/repos/) | | Manage Git repositories (list, get, branches, tree, commits) |
+| [`pull-requests`](/cli/pull-requests/) | `pr`, `prs` | Manage pull requests (list, get, reviewers) |
+| [`pipelines`](/cli/pipelines/) | `pipe` | Manage CI/CD pipelines (list, get, runs, definitions) |
+| [`wiki`](/cli/wiki/) | | Manage wiki pages (list, get, pages) |
+| [`search`](/cli/search/) | | Search code, work items, and WIQL |
+| [`iterations`](/cli/iterations/) | `iter`, `sprints` | Manage iterations/sprints (list, current, settings) |
+| [`boards`](/cli/boards/) | | Manage Kanban boards (list, columns) |
+| [`projects`](/cli/projects/) | `proj` | Manage projects and teams (list, get, teams) |
+| [`attachments`](/cli/attachments/) | `attach` | Manage work item attachments (list) |
+| [`test-plans`](/cli/test-plans/) | `tp` | Manage test plans, suites, and cases |
+| [`security`](/cli/security/) | | Manage Advanced Security alerts |
+
+<Aside type="tip">
+Most commands that operate within a project accept a `--project` or `-p` flag. Some commands like `projects list` work at the organization level and don't require it.
+</Aside>

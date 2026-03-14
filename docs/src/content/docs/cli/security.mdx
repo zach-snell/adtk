@@ -1,0 +1,47 @@
+---
+title: adtk security
+description: Manage Azure DevOps Advanced Security alerts from the CLI
+---
+import { Aside } from '@astrojs/starlight/components';
+
+The `security` command group lets you list and inspect Advanced Security alerts for repositories. This requires Azure DevOps Advanced Security to be enabled on your organization.
+
+## Shared Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project` | `-p` | Project name (required) |
+| `--repo` | `-r` | Repository name or ID (required) |
+
+## alerts
+
+List security alerts for a repository. Outputs raw JSON.
+
+```bash
+adtk security alerts --project MyProject --repo backend-api [--states "active"] [--severities "high,critical"]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--states` | Filter by alert states |
+| `--severities` | Filter by severities |
+
+**Example:**
+
+```bash
+adtk security alerts -p MyProject -r backend-api --severities "critical"
+```
+
+## alert
+
+Get details for a specific security alert by ID. Outputs raw JSON.
+
+```bash
+adtk security alert <alert-id> --project MyProject --repo backend-api
+```
+
+**Example:**
+
+```bash
+adtk security alert 42 -p MyProject -r backend-api
+```

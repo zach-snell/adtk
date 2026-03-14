@@ -1,0 +1,40 @@
+---
+title: manage_users
+description: MCP tool for searching and getting Azure DevOps users
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Search and get Azure DevOps users. Retrieve the currently authenticated user or search for users by display name or email.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `get_current` | Get the currently authenticated user | | | No |
+| `search` | Search users by display name or email | `query` | | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `get_current`, `search` |
+| `query` | string | Search query — display name or email (required for `search`) |
+
+## Examples
+
+### Get the current user
+
+```json
+{
+  "action": "get_current"
+}
+```
+
+### Search for a user
+
+```json
+{
+  "action": "search",
+  "query": "jane.doe@example.com"
+}
+```

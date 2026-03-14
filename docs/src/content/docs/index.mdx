@@ -1,0 +1,32 @@
+---
+title: adtk - Azure DevOps Toolkit
+description: The most comprehensive Azure DevOps MCP server. A single Go binary — CLI for humans, MCP for AI agents.
+template: splash
+hero:
+  tagline: The most comprehensive Azure DevOps MCP server. A single Go binary — CLI for humans, MCP for AI agents.
+  actions:
+    - text: Get Started
+      link: /adtk/getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/zach-snell/adtk
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="Dual Mode" icon="setting">
+    Use `adtk` as a full-featured CLI with table output, or run it as an MCP server for AI agents. Same binary, same auth, same capabilities.
+  </Card>
+  <Card title="Microsoft Parity" icon="approve-check-circle">
+    13 consolidated MCP tools with 82 actions covering work items, repos, PRs, pipelines, boards, wiki, iterations, test plans, advanced security, and more. Meets and exceeds Microsoft's official `azure-devops-mcp`.
+  </Card>
+  <Card title="Token-Optimized" icon="rocket">
+    Built-in response flattening converts `System.Title` to `title` and strips `_links` noise. AI agents get clean, concise payloads that use fewer tokens.
+  </Card>
+  <Card title="Single Binary" icon="seti:go">
+    Pure Go. Zero runtime dependencies. No Node.js, no Python, no Docker required. Download a ~15 MB binary and you're ready. Starts in ~50ms.
+  </Card>
+</CardGrid>

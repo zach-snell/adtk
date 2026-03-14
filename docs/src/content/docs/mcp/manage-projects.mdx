@@ -1,0 +1,69 @@
+---
+title: manage_projects
+description: MCP tool for managing Azure DevOps projects and teams
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps projects and teams. List projects in an organization, get project details, list teams, and create new projects.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `list` | List all projects in the organization | | | No |
+| `get` | Get project details | `project_key` | | No |
+| `list_teams` | List teams in a project | `project_key` | | No |
+| `get_team` | Get team details | `project_key`, `team_id` | | No |
+| `create` | Create a new project | `name` | `description` | Yes |
+
+<Aside type="note">
+Project creation in Azure DevOps is asynchronous. The `create` action initiates the creation process, which may take a few moments to complete. New projects use Git for version control and the Agile process template by default.
+</Aside>
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `list`, `get`, `list_teams`, `get_team`, `create` |
+| `project_key` | string | Project name or ID (required for get, list_teams, get_team) |
+| `team_id` | string | Team name or ID (required for get_team) |
+| `name` | string | Project name (required for create) |
+| `description` | string | Project description (for create) |
+
+## Examples
+
+### List all projects
+
+```json
+{
+  "action": "list"
+}
+```
+
+### Get project details
+
+```json
+{
+  "action": "get",
+  "project_key": "MyProject"
+}
+```
+
+### List teams in a project
+
+```json
+{
+  "action": "list_teams",
+  "project_key": "MyProject"
+}
+```
+
+### Create a new project
+
+```json
+{
+  "action": "create",
+  "name": "NewProject",
+  "description": "A new engineering project"
+}
+```

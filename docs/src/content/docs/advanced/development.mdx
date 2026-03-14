@@ -1,0 +1,182 @@
+---
+title: Development
+description: Development setup, testing, linting, and contributing to adtk.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Prerequisites
+
+- **Go 1.26+**
+- **golangci-lint** (for linting)
+- **govulncheck** (for vulnerability scanning)
+
+## Setup
+
+```bash
+git clone https://github.com/zach-snell/adtk.git
+cd adtk
+go mod download
+```
+
+## Project Structure
+
+```
+adtk/
+├── cmd/
+│   ├── adtk/
+│   │   └── main.go            # Entry point
+│   └── cli/
+│       ├── root.go            # Root cobra command
+│       ├── auth.go            # adtk auth
+│       ├── mcp.go             # adtk mcp
+│       ├── projects.go        # adtk projects
+│       ├── work_items.go      # adtk work-items
+│       ├── repos.go           # adtk repos
+│       ├── pull_requests.go   # adtk pull-requests
+│       ├── pipelines.go       # adtk pipelines
+│       ├── iterations.go      # adtk iterations
+│       ├── boards.go          # adtk boards
+│       ├── wiki.go            # adtk wiki
+│       ├── search.go          # adtk search
+│       ├── attachments.go     # adtk attachments
+│       ├── test_plans.go      # adtk test-plans
+│       ├── advanced_security.go # adtk security
+│       └── format.go          # Table formatting
+├── internal/
+│   ├── devops/
+│   │   ├── client.go          # HTTP client, auth, rate limiter
+│   │   ├── types.go           # ADO type definitions
+│   │   ├── work_items.go      # Work item API methods
+│   │   ├── repos.go           # Repository API methods
+│   │   ├── pull_requests.go   # PR API methods
+│   │   ├── pipelines.go       # Pipeline API methods
+│   │   ├── iterations.go      # Iteration API methods
+│   │   ├── wiki.go            # Wiki API methods
+│   │   ├── search.go          # Search API methods
+│   │   ├── attachments.go     # Attachment API methods
+│   │   ├── test_plans.go      # Test plan API methods
+│   │   ├── advanced_security.go # Security alerts API
+│   │   ├── credentials.go     # Credential storage
+│   │   └── testing.go         # Test helpers
+│   ├── mcp/
+│   │   ├── server.go          # MCP server setup, tool registration
+│   │   ├── utils.go           # Result helpers
+│   │   ├── work_items.go      # manage_work_items handler
+│   │   ├── repos.go           # manage_repos handler
+│   │   ├── pull_requests.go   # manage_pull_requests handler
+│   │   ├── pipelines.go       # manage_pipelines handler
+│   │   ├── projects.go        # manage_projects handler
+│   │   ├── users.go           # manage_users handler
+│   │   ├── search.go          # manage_search handler
+│   │   ├── iterations.go      # manage_iterations handler
+│   │   ├── boards.go          # manage_boards handler
+│   │   ├── wiki.go            # manage_wiki handler
+│   │   ├── attachments.go     # manage_attachments handler
+│   │   ├── test_plans.go      # manage_test_plans handler
+│   │   ├── advanced_security.go # manage_advanced_security handler
+│   │   └── *_test.go          # MCP handler tests
+│   └── version/
+│       └── version.go         # Build version info
+├── docs/                      # Astro Starlight documentation
+├── .github/workflows/         # CI/CD workflows
+├── .golangci.yml              # Linter configuration
+├── go.mod
+├── go.sum
+├── install.sh
+├── LICENSE                    # Apache 2.0
+└── README.md
+```
+
+## Building
+
+```bash
+# Simple build
+go build -o adtk ./cmd/adtk
+
+# Build with version info
+VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+go build -ldflags="-s -w -X 'github.com/zach-snell/adtk/internal/version.Version=$VERSION'" \
+  -o adtk ./cmd/adtk
+```
+
+## Running Tests
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with race detector
+go test -race ./...
+
+# Run with coverage
+go test -race -coverprofile=coverage.out -covermode=atomic ./...
+go tool cover -html=coverage.out
+```
+
+Tests use `devops.NewTestClient()` which routes API calls to an `httptest.Server`, so no real Azure DevOps instance is needed.
+
+## Linting
+
+adtk uses golangci-lint with the following linters enabled:
+
+- staticcheck, gosec, govet, revive, errcheck
+- ineffassign, unused, gocritic, gocyclo
+- gofmt, goimports
+
+```bash
+# Install
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Run
+golangci-lint run ./...
+```
+
+## Vulnerability Scanning
+
+```bash
+go install golang.org/x/vuln/cmd/govulncheck@latest
+govulncheck ./...
+```
+
+## CI/CD
+
+The project uses GitHub Actions with three workflows:
+
+### CI (`.github/workflows/ci.yml`)
+
+Runs on every push and PR to `main`:
+1. **Lint** — golangci-lint
+2. **Test** — `go test -race` with coverage uploaded to Codecov
+3. **Vulnerability Check** — govulncheck
+4. **Build** — Verify the binary compiles
+5. **Build All Platforms** — Cross-compile for linux/darwin/windows (amd64/arm64) on main branch pushes
+
+### Docs (`.github/workflows/docs.yml`)
+
+Builds and deploys the Starlight documentation site to GitHub Pages.
+
+### Release (`.github/workflows/release.yml`)
+
+Triggered by tags to create GitHub releases with pre-built binaries.
+
+## Adding a New MCP Tool
+
+1. Create the API methods in `internal/devops/` (e.g., `internal/devops/new_domain.go`)
+2. Create the MCP handler in `internal/mcp/` with an input struct and handler function
+3. Register the tool in `internal/mcp/server.go` → `registerTools()`
+4. Write tests in `internal/mcp/new_domain_test.go`
+5. Add CLI commands in `cmd/cli/new_domain.go`
+6. Update the sidebar in `docs/astro.config.mjs`
+
+## Adding a New Action to an Existing Tool
+
+1. Add the action case to the handler's switch statement
+2. Add the API method to `internal/devops/` if needed
+3. Update the input struct with any new fields
+4. Update the tool description string in `server.go` to include the new action name
+5. Add tests
+
+<Aside type="tip">
+The MCP handler tests use `devops.NewTestClient()` which creates a client that routes all requests to an `httptest.Server`. This lets you test the full MCP → devops.Client → HTTP → response pipeline without any external dependencies.
+</Aside>

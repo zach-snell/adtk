@@ -1,0 +1,118 @@
+---
+title: manage_work_items
+description: MCP tool for managing Azure DevOps work items — tasks, bugs, user stories, epics
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Manage Azure DevOps work items including tasks, bugs, user stories, epics, and features. Supports 18 actions covering CRUD operations, comments, linking, batch operations, and querying.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `get` | Get a work item by ID | `work_item_id` | `project_key` | No |
+| `batch_get` | Get multiple work items by IDs | `work_item_ids` | `project_key`, `fields` | No |
+| `create` | Create a new work item | `project_key`, `work_item_type`, `title` | `description`, `state`, `assigned_to`, `area_path`, `iteration_path`, `priority`, `parent_id`, `tags` | Yes |
+| `update` | Update an existing work item | `work_item_id` | `project_key`, `title`, `description`, `state`, `assigned_to`, `area_path`, `iteration_path`, `priority`, `tags` | Yes |
+| `delete` | Delete a work item | `work_item_id` | `project_key` | Yes |
+| `add_comment` | Add a comment to a work item | `work_item_id`, `comment` | `project_key` | Yes |
+| `update_comment` | Update an existing comment | `work_item_id`, `comment_id`, `comment` | `project_key` | Yes |
+| `list_comments` | List comments on a work item | `work_item_id` | `project_key` | No |
+| `get_links` | Get work item relations/links | `work_item_id` | `project_key` | No |
+| `list_types` | List available work item types | `project_key` | | No |
+| `get_history` | Get work item update history | `work_item_id` | `project_key` | No |
+| `batch_update` | Update multiple work items at once | `work_item_ids` | `project_key`, `title`, `description`, `state`, `assigned_to`, `area_path`, `iteration_path`, `priority`, `tags` | Yes |
+| `add_children` | Create child work items under a parent | `parent_id`, `work_item_type`, `titles` | `project_key` | Yes |
+| `link` | Link two work items | `work_item_id`, `target_id`, `link_type` | `project_key` | Yes |
+| `unlink` | Remove a relation from a work item | `work_item_id`, `relation_index` | `project_key` | Yes |
+| `add_artifact_link` | Add an artifact link (e.g. commit) | `work_item_id`, `artifact_uri`, `link_type` | `project_key`, `comment` | Yes |
+| `my_items` | List work items assigned to the current user | `project_key` | `work_item_type`, `include_completed`, `top` | No |
+| `iteration_items` | List work items in an iteration | `project_key`, `iteration_id` | `team` | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform |
+| `project_key` | string | Project name (required for most actions) |
+| `work_item_id` | integer | Work item ID (required for get, update, delete, add_comment, list_comments, get_links, get_history) |
+| `work_item_ids` | integer[] | Work item IDs for batch operations (max 200) |
+| `work_item_type` | string | Work item type: `Task`, `Bug`, `User Story`, `Epic`, `Feature`, `Issue` (required for create) |
+| `title` | string | Work item title (required for create) |
+| `description` | string | Work item description in HTML (for create, update) |
+| `state` | string | Work item state: `New`, `Active`, `Closed`, etc. (for update) |
+| `assigned_to` | string | Assignee display name or email (for create, update) |
+| `area_path` | string | Area path, e.g. `Project\Team` (for create, update) |
+| `iteration_path` | string | Iteration path, e.g. `Project\Sprint 1` (for create, update) |
+| `priority` | integer | Priority: 1=Critical, 2=High, 3=Medium, 4=Low (for create, update) |
+| `parent_id` | integer | Parent work item ID to link (for create, add_children) |
+| `tags` | string | Semicolon-separated tags (for create, update) |
+| `comment` | string | Comment text in HTML (for add_comment, update_comment, add_artifact_link) |
+| `comment_id` | integer | Comment ID (required for update_comment) |
+| `query` | string | WIQL query string |
+| `fields` | string[] | Fields to return for batch_get. Default: `System.Title`, `System.State`, `System.AssignedTo` |
+| `top` | integer | Max results to return (default 25 for my_items) |
+| `target_id` | integer | Target work item ID (required for link) |
+| `link_type` | string | Link type name, e.g. `System.LinkTypes.Related`, `System.LinkTypes.Hierarchy-Forward` |
+| `relation_index` | integer | Relation index to remove (required for unlink) |
+| `artifact_uri` | string | Artifact URI, e.g. `vstfs:///Git/Commit/{projectId}%2F{repoId}%2F{commitId}` |
+| `titles` | string[] | List of titles for child work items (required for add_children) |
+| `team` | string | Team name (optional, scopes iteration_items) |
+| `iteration_id` | string | Iteration ID (required for iteration_items) |
+| `include_completed` | boolean | Include completed/closed items (for my_items, default false) |
+
+## Examples
+
+### Get a work item
+
+```json
+{
+  "action": "get",
+  "work_item_id": 42
+}
+```
+
+### Create a bug
+
+```json
+{
+  "action": "create",
+  "project_key": "MyProject",
+  "work_item_type": "Bug",
+  "title": "Login page returns 500 error",
+  "description": "<p>Steps to reproduce...</p>",
+  "priority": 2,
+  "assigned_to": "jane@example.com"
+}
+```
+
+### Batch get work items with specific fields
+
+```json
+{
+  "action": "batch_get",
+  "work_item_ids": [42, 43, 44],
+  "fields": ["System.Title", "System.State", "System.AssignedTo"]
+}
+```
+
+### Link two work items
+
+```json
+{
+  "action": "link",
+  "work_item_id": 42,
+  "target_id": 100,
+  "link_type": "System.LinkTypes.Related"
+}
+```
+
+### Get my active work items
+
+```json
+{
+  "action": "my_items",
+  "project_key": "MyProject",
+  "top": 50
+}
+```
