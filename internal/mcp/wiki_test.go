@@ -153,3 +153,55 @@ func TestManageWikiHandler_UnknownAction(t *testing.T) {
 	}
 	assertResultError(t, result, "unknown action")
 }
+
+func TestManageWikiHandler_ListPages(t *testing.T) {
+	t.Parallel()
+	// The API returns a nested tree. The handler flattens it.
+	c := newTestClient(t, jsonHandler(`{"id":1,"path":"/","subPages":[{"id":2,"path":"/Home","subPages":[{"id":3,"path":"/Home/Setup"}]},{"id":4,"path":"/Design"}]}`))
+	handler := ManageWikiHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageWikiInput{
+		Action:     "list_pages",
+		ProjectKey: "TestProject",
+		WikiID:     "ProjectWiki",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Verify the nested tree is flattened to a list
+	assertResultSuccess(t, result, "/Home")
+	assertResultSuccess(t, result, "/Home/Setup")
+	assertResultSuccess(t, result, "/Design")
+}
+
+func TestManageWikiHandler_ListPages_MissingWikiID(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageWikiHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageWikiInput{
+		Action:     "list_pages",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "wiki_id is required")
+}
+
+func TestManageWikiHandler_DeletePage(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{}`))
+	handler := ManageWikiHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageWikiInput{
+		Action:     "delete_page",
+		ProjectKey: "TestProject",
+		WikiID:     "w1",
+		PagePath:   "/OldPage",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "deleted successfully")
+}

@@ -166,3 +166,274 @@ func TestManagePullRequestsHandler_UnknownAction(t *testing.T) {
 	}
 	assertResultError(t, result, "unknown action")
 }
+
+func TestManagePullRequestsHandler_CreateThread(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"id":10,"comments":[{"id":1,"content":"Review comment"}],"status":"active"}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:  "create_thread",
+		RepoID:  "repo1",
+		PRID:    42,
+		Comment: "Review comment",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Review comment")
+}
+
+func TestManagePullRequestsHandler_CreateThread_Inline(t *testing.T) {
+	t.Parallel()
+	// The handler passes filePath and line to CreatePRThread which includes them in the POST body.
+	// The mock returns a thread response; we verify the thread was created successfully.
+	c := newTestClient(t, jsonHandler(`{"id":11,"comments":[{"id":1,"content":"Line comment"}],"status":"active"}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "create_thread",
+		RepoID:   "repo1",
+		PRID:     42,
+		Comment:  "Line comment",
+		FilePath: "/src/main.go",
+		Line:     25,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Line comment")
+	assertResultSuccess(t, result, `"id": 11`)
+}
+
+func TestManagePullRequestsHandler_CreateThread_WritesDisabled(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:  "create_thread",
+		RepoID:  "repo1",
+		PRID:    42,
+		Comment: "test",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "ADTK_ENABLE_WRITES=true")
+}
+
+func TestManagePullRequestsHandler_CreateThread_MissingFields(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action: "create_thread",
+		RepoID: "repo1",
+		PRID:   42,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "comment are required")
+}
+
+func TestManagePullRequestsHandler_UpdateThread(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "update_thread",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+		Status:   "closed",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "closed")
+}
+
+func TestManagePullRequestsHandler_UpdateThread_MissingFields(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "update_thread",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "status are required")
+}
+
+func TestManagePullRequestsHandler_UpdateThread_WritesDisabled(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "update_thread",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+		Status:   "closed",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "ADTK_ENABLE_WRITES=true")
+}
+
+func TestManagePullRequestsHandler_ReplyToComment(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"id":5,"content":"Thanks for the feedback","commentType":"text"}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "reply_to_comment",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+		Comment:  "Thanks for the feedback",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Thanks for the feedback")
+}
+
+func TestManagePullRequestsHandler_ReplyToComment_MissingFields(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "reply_to_comment",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "comment are required")
+}
+
+func TestManagePullRequestsHandler_ReplyToComment_WritesDisabled(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:   "reply_to_comment",
+		RepoID:   "repo1",
+		PRID:     42,
+		ThreadID: 10,
+		Comment:  "test",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "ADTK_ENABLE_WRITES=true")
+}
+
+func TestManagePullRequestsHandler_UpdateReviewers(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:      "update_reviewers",
+		RepoID:      "repo1",
+		PRID:        42,
+		ReviewerIDs: "user1,user2",
+		Status:      "add",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "add")
+}
+
+func TestManagePullRequestsHandler_UpdateReviewers_Remove(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{}`))
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:      "update_reviewers",
+		RepoID:      "repo1",
+		PRID:        42,
+		ReviewerIDs: "user1",
+		Status:      "remove",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "remove")
+}
+
+func TestManagePullRequestsHandler_UpdateReviewers_WritesDisabled(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action:      "update_reviewers",
+		RepoID:      "repo1",
+		PRID:        42,
+		ReviewerIDs: "user1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "ADTK_ENABLE_WRITES=true")
+}
+
+func TestManagePullRequestsHandler_UpdateReviewers_MissingFields(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePullRequestsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePullRequestsInput{
+		Action: "update_reviewers",
+		RepoID: "repo1",
+		PRID:   42,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "reviewer_ids are required")
+}
+
+func TestParseCSV(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+		want  int
+	}{
+		{"simple", "a,b,c", 3},
+		{"with spaces", " a , b , c ", 3},
+		{"single", "a", 1},
+		{"empty parts", "a,,b", 2},
+		{"empty string", "", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := parseCSV(tt.input)
+			if len(got) != tt.want {
+				t.Errorf("parseCSV(%q) = %d items, want %d", tt.input, len(got), tt.want)
+			}
+		})
+	}
+}

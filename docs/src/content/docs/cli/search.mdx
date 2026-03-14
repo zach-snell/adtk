@@ -4,7 +4,7 @@ description: Search Azure DevOps code, work items, and WIQL queries
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-The `search` command group provides text search across code repositories, work items, and WIQL queries.
+The `search` command group provides text search across code repositories, work items, WIQL queries, and saved queries.
 
 ## Shared Flags
 
@@ -69,6 +69,28 @@ adtk search wiql <query> [--project myproject] [--top 25]
 
 ```bash
 adtk search wiql "SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.State] = 'Active' AND [System.WorkItemType] = 'Bug' ORDER BY [System.ChangedDate] DESC" -p MyProject --top 10
+```
+
+```
+ID    TYPE    TITLE                                              STATE
+42    Bug     Fix login page redirect                            Active
+67    Bug     Memory leak in background worker                   Active
+
+2 work items
+```
+
+## query
+
+Run a saved query by its ID or path. Returns work items matching the saved query definition.
+
+```bash
+adtk search query <id-or-path> [--project myproject] [--top 25]
+```
+
+**Example:**
+
+```bash
+adtk search query "My Saved Queries/Active Bugs" -p MyProject
 ```
 
 ```

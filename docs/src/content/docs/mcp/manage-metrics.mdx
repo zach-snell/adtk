@@ -1,0 +1,69 @@
+---
+title: manage_metrics
+description: MCP tool for getting work item lifecycle metrics
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Get issue lifecycle metrics for dashboards and visualizations. Computes cycle time, lead time, time-in-status, and status transitions from work item revision history.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Write |
+|--------|-------------|-----------------|-----------------|-------|
+| `get_metrics` | Compute lifecycle metrics for a work item | `project_key`, `work_item_id` | | No |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** The action to perform: `get_metrics` |
+| `project_key` | string | **Required.** Project name |
+| `work_item_id` | integer | **Required.** Work item ID |
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `work_item_id` | integer | The work item ID |
+| `current_status` | string | Current state of the work item (e.g., Active, Closed) |
+| `cycle_time` | string | Time from first Active state to last Closed/Done state (e.g., "3d 4h") |
+| `lead_time` | string | Time from creation to first Closed/Done state (e.g., "5d 12h") |
+| `time_in_status` | object | Map of status name to duration spent in that status |
+| `status_transitions` | array | Ordered list of state changes with timestamps |
+
+<Aside type="note">
+**Cycle time** measures Active → Closed (work in progress). **Lead time** measures Created → Closed (total time). Active states include: Active, In Progress, Committed. Closed states include: Closed, Done, Resolved, Removed.
+</Aside>
+
+## Examples
+
+### Get metrics for a work item
+
+```json
+{
+  "action": "get_metrics",
+  "project_key": "MyProject",
+  "work_item_id": 42
+}
+```
+
+### Example response
+
+```json
+{
+  "work_item_id": 42,
+  "current_status": "Closed",
+  "cycle_time": "3d 4h",
+  "lead_time": "5d 12h",
+  "time_in_status": {
+    "New": "1d 8h",
+    "Active": "3d 4h",
+    "Closed": "1d"
+  },
+  "status_transitions": [
+    { "from": "", "to": "New", "at": "2025-01-10T09:00:00Z" },
+    { "from": "New", "to": "Active", "at": "2025-01-11T17:00:00Z" },
+    { "from": "Active", "to": "Closed", "at": "2025-01-14T21:00:00Z" }
+  ]
+}
+```

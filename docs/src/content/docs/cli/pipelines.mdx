@@ -4,7 +4,7 @@ description: Manage Azure DevOps CI/CD pipelines from the CLI
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-The `pipelines` command group (alias: `pipe`) lets you list and inspect CI/CD pipeline definitions and their runs.
+The `pipelines` command group (alias: `pipe`) lets you list and inspect CI/CD pipeline definitions, their runs, variable groups, and deployment environments.
 
 ## Shared Flags
 
@@ -79,4 +79,63 @@ List build definitions in a project. Outputs raw JSON.
 
 ```bash
 adtk pipelines definitions --project MyProject
+```
+
+## var-groups
+
+List variable groups in a project.
+
+```bash
+adtk pipelines var-groups --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk pipe var-groups -p MyProject
+```
+
+```
+ID    NAME                  DESCRIPTION
+1     staging-vars          Variables for staging environment
+2     production-secrets    Production secrets and keys
+
+2 variable groups
+```
+
+## var-group
+
+Get a specific variable group by ID.
+
+```bash
+adtk pipelines var-group <id> --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk pipe var-group 1 -p MyProject
+```
+
+## environments
+
+List deployment environments in a project.
+
+```bash
+adtk pipelines environments --project MyProject
+```
+
+**Example:**
+
+```bash
+adtk pipe environments -p MyProject
+```
+
+```
+ID    NAME
+1     Development
+2     Staging
+3     Production
+
+3 environments
 ```

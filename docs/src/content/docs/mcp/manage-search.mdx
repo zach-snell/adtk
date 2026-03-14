@@ -4,7 +4,7 @@ description: MCP tool for searching Azure DevOps — WIQL, code, work items, wik
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-Search Azure DevOps using WIQL queries, code search, work item text search, or wiki search. All actions require a `query` parameter.
+Search Azure DevOps using WIQL queries, code search, work item text search, wiki search, or saved queries.
 
 ## Actions
 
@@ -14,13 +14,16 @@ Search Azure DevOps using WIQL queries, code search, work item text search, or w
 | `code` | Search code across repositories | `query` | `project_key`, `top` | No |
 | `work_items` | Search work items by text | `query` | `project_key`, `top` | No |
 | `wiki` | Search wiki content | `query` | `project_key`, `top` | No |
+| `get_query` | Get a saved query definition by ID or path | `query_id` | `project_key` | No |
+| `run_query` | Run a saved query and return results | `query_id` | `project_key`, `top` | No |
 
 ## Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `action` | string | **Required.** The action to perform: `wiql`, `code`, `work_items`, `wiki` |
-| `query` | string | **Required.** WIQL query string (for `wiql`) or search text (for `code`, `work_items`, `wiki`) |
+| `action` | string | **Required.** The action to perform: `wiql`, `code`, `work_items`, `wiki`, `get_query`, `run_query` |
+| `query` | string | WIQL query string (for `wiql`) or search text (for `code`, `work_items`, `wiki`) |
+| `query_id` | string | Saved query ID or path (for `get_query`, `run_query`) |
 | `project_key` | string | Project name (optional, scopes the search) |
 | `top` | integer | Max results to return (default 25) |
 | `fields` | string[] | Fields to return for WIQL results |
@@ -66,5 +69,26 @@ Search Azure DevOps using WIQL queries, code search, work item text search, or w
   "action": "wiki",
   "query": "architecture diagram",
   "project_key": "MyProject"
+}
+```
+
+### Get a saved query definition
+
+```json
+{
+  "action": "get_query",
+  "query_id": "My Saved Queries/Active Bugs",
+  "project_key": "MyProject"
+}
+```
+
+### Run a saved query
+
+```json
+{
+  "action": "run_query",
+  "query_id": "My Saved Queries/Active Bugs",
+  "project_key": "MyProject",
+  "top": 50
 }
 ```

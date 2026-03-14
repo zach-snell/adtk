@@ -13,7 +13,7 @@ export default defineConfig({
 			plugins: [
 				starlightLlmsTxt({
 					projectName: 'adtk (Azure DevOps Toolkit)',
-					description: 'A dual-mode Go CLI and MCP Server for Azure DevOps. Provides 13 MCP tools with 82 actions for work items, repos, PRs, pipelines, wiki, boards, iterations, search, test plans, advanced security, projects, users, and attachments. Features multi-base-URL routing, PAT auth, WIQL 2-step pattern, response flattening, and rate limiting.',
+					description: 'A dual-mode Go CLI and MCP Server for Azure DevOps. Provides 14 MCP tools with 91 actions and 4 MCP prompts for work items, repos, PRs, pipelines, wiki, boards, iterations, search, test plans, advanced security, metrics, projects, users, and attachments. Features multi-base-URL routing, PAT auth, WIQL 2-step pattern, response flattening, git branch detection, and rate limiting.',
 					customSets: [
 						{
 							label: 'MCP Tools',
@@ -81,8 +81,10 @@ export default defineConfig({
 						{ label: 'manage_pipelines', slug: 'mcp/manage-pipelines' },
 						{ label: 'manage_attachments', slug: 'mcp/manage-attachments' },
 						{ label: 'manage_test_plans', slug: 'mcp/manage-test-plans' },
-						{ label: 'manage_advanced_security', slug: 'mcp/manage-advanced-security' },
-					],
+					{ label: 'manage_advanced_security', slug: 'mcp/manage-advanced-security' },
+					{ label: 'manage_metrics', slug: 'mcp/manage-metrics' },
+					{ label: 'Prompts', slug: 'mcp/prompts' },
+				],
 				},
 				{
 					label: 'Guides',

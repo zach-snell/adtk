@@ -46,6 +46,38 @@ Priority:    2
 Tags:        frontend; auth
 ```
 
+### Auto-detect from git branch
+
+If your branch name contains a work item ID (e.g., `feature/12345-add-login`), you can omit the ID:
+
+```bash
+# On branch feature/42-implement-login
+adtk work-items get
+# Automatically detects work item 42 from the branch name
+```
+
+## 3b. View Work Item Metrics
+
+```bash
+adtk work-items metrics 42 -p MyProject
+```
+
+Output:
+```
+Current Status: Active
+Cycle Time:     3d 4h
+Lead Time:      5d 12h
+
+  Time in Status:
+    New:      1d 8h
+    Active:   3d 4h
+
+  Status Transitions:
+  FROM    TO      AT
+          New     2025-01-10 09:00
+  New     Active  2025-01-11 17:00
+```
+
 ## 4. Search with WIQL
 
 ```bash

@@ -166,3 +166,115 @@ func TestManagePipelinesHandler_UnknownAction(t *testing.T) {
 	}
 	assertResultError(t, result, "unknown action")
 }
+
+func TestManagePipelinesHandler_GetBuildChanges(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"value":[{"id":"change1","message":"fix: update config","author":{"displayName":"Jane"}},{"id":"change2","message":"feat: add login","author":{"displayName":"John"}}]}`))
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "get_build_changes",
+		ProjectKey: "TestProject",
+		BuildID:    500,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "fix: update config")
+	assertResultSuccess(t, result, "feat: add login")
+}
+
+func TestManagePipelinesHandler_GetBuildChanges_MissingBuildID(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "get_build_changes",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "build_id is required")
+}
+
+func TestManagePipelinesHandler_ListDefinitions(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"value":[{"id":1,"name":"CI Build","path":"\\"},{"id":2,"name":"CD Deploy","path":"\\prod"}]}`))
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "list_definitions",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "CI Build")
+	assertResultSuccess(t, result, "CD Deploy")
+}
+
+func TestManagePipelinesHandler_ListVariableGroups(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"value":[{"id":1,"name":"prod-vars","variables":{"DB_HOST":{"value":"db.prod.com"}}},{"id":2,"name":"dev-vars","variables":{"DB_HOST":{"value":"db.dev.com"}}}]}`))
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "list_variable_groups",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "prod-vars")
+	assertResultSuccess(t, result, "dev-vars")
+}
+
+func TestManagePipelinesHandler_GetVariableGroup(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"id":1,"name":"prod-vars","variables":{"DB_HOST":{"value":"db.prod.com"},"API_KEY":{"isSecret":true}}}`))
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "get_variable_group",
+		ProjectKey: "TestProject",
+		GroupID:    1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "prod-vars")
+	assertResultSuccess(t, result, "DB_HOST")
+}
+
+func TestManagePipelinesHandler_GetVariableGroup_MissingID(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "get_variable_group",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "group_id is required")
+}
+
+func TestManagePipelinesHandler_ListEnvironments(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"value":[{"id":1,"name":"production"},{"id":2,"name":"staging"}]}`))
+	handler := ManagePipelinesHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManagePipelinesInput{
+		Action:     "list_environments",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "production")
+	assertResultSuccess(t, result, "staging")
+}

@@ -14,11 +14,13 @@ The `work-items` command group (alias: `wi`) lets you query, inspect, and list w
 
 ## get
 
-Get a single work item by its ID.
+Get a single work item by its ID. If the ID is omitted, adtk auto-detects the work item ID from the current git branch name.
 
 ```bash
-adtk work-items get <id> [--project myproject]
+adtk work-items get [id] [--project myproject]
 ```
+
+Supported branch patterns for auto-detection: `feature/12345-description`, `users/name/12345-fix`, `bugfix/12345`, `12345-description`.
 
 **Example:**
 
@@ -32,6 +34,14 @@ adtk wi get 42 -p MyProject
   System.Title:   Fix login page redirect
   System.State:   Active
   System.AssignedTo: Jane Doe
+```
+
+**Auto-detect from branch:**
+
+```bash
+# On branch feature/42-fix-login
+adtk wi get
+# Automatically fetches work item 42
 ```
 
 ## list
@@ -119,4 +129,35 @@ ID    AUTHOR      DATE              TEXT
 2     John Smith  2025-01-15 14:22  Found the issue in the redirect handler
 
 2 comments
+```
+
+## metrics
+
+Show lifecycle metrics for a work item, including cycle time, lead time, time-in-status, and status transitions.
+
+```bash
+adtk work-items metrics <id> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk wi metrics 42 -p MyProject
+```
+
+```
+Current Status: Closed
+Cycle Time:     72h0m0s
+Lead Time:      132h0m0s
+
+  Time in Status:
+    New:      32h0m0s
+    Active:   72h0m0s
+    Closed:   28h0m0s
+
+  Status Transitions:
+  FROM    TO      AT
+          New     2025-01-10 09:00
+  New     Active  2025-01-11 17:00
+  Active  Closed  2025-01-14 17:00
 ```

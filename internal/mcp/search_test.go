@@ -101,3 +101,69 @@ func TestManageSearchHandler_UnknownAction(t *testing.T) {
 	}
 	assertResultError(t, result, "unknown action")
 }
+
+func TestManageSearchHandler_GetQuery(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"id":"query-abc","name":"Active Bugs","wiql":"SELECT [System.Id] FROM WorkItems WHERE [System.State] = 'Active'"}`))
+	handler := ManageSearchHandler(c)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageSearchInput{
+		Action:     "get_query",
+		ProjectKey: "TestProject",
+		QueryID:    "query-abc",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Active Bugs")
+	assertResultSuccess(t, result, "query-abc")
+}
+
+func TestManageSearchHandler_GetQuery_MissingID(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageSearchHandler(c)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageSearchInput{
+		Action: "get_query",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "query_id is required")
+}
+
+func TestManageSearchHandler_RunQuery(t *testing.T) {
+	t.Parallel()
+	// run_query uses 2-step: POST wiql/{id} → POST workitemsbatch
+	c := newTestClient(t, muxHandler(map[string]http.HandlerFunc{
+		"/test-org/TestProject/_apis/wit/wiql":           jsonHandler(`{"queryType":"flat","queryResultType":"workItem","workItems":[{"id":10},{"id":20}]}`),
+		"/test-org/TestProject/_apis/wit/workitemsbatch": jsonHandler(`{"count":2,"value":[{"id":10,"rev":1,"fields":{"System.Title":"Query Result 1"}},{"id":20,"rev":1,"fields":{"System.Title":"Query Result 2"}}]}`),
+	}))
+	handler := ManageSearchHandler(c)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageSearchInput{
+		Action:     "run_query",
+		ProjectKey: "TestProject",
+		QueryID:    "saved-query-id",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, `"title": "Query Result 1"`)
+	assertResultSuccess(t, result, `"title": "Query Result 2"`)
+}
+
+func TestManageSearchHandler_RunQuery_MissingID(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageSearchHandler(c)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageSearchInput{
+		Action: "run_query",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "query_id is required")
+}

@@ -4,7 +4,7 @@ description: MCP tool for managing Azure DevOps Git repositories
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-Manage Azure DevOps Git repositories. List repos, browse branches, read files, navigate directory trees, search commits, and create branches.
+Manage Azure DevOps Git repositories. List repos, browse branches, read files, navigate directory trees, search commits, manage branch policies, and work with tags.
 
 ## Actions
 
@@ -16,7 +16,10 @@ Manage Azure DevOps Git repositories. List repos, browse branches, read files, n
 | `get_file` | Get file content from a repository | `repo_id`, `file_path` | `project_key`, `version` | No |
 | `get_tree` | List files/directories in a repo path | `repo_id` | `project_key`, `file_path` | No |
 | `search_commits` | Search commits with filters | `repo_id` | `project_key`, `author`, `from_date`, `to_date` | No |
+| `list_policies` | List branch policies for a repository | | `project_key`, `repo_id` | No |
+| `list_tags` | List tags in a repository | `repo_id` | `project_key` | No |
 | `create_branch` | Create a new branch | `repo_id`, `branch_name`, `source_branch` | `project_key` | Yes |
+| `create_tag` | Create a tag at a commit | `repo_id`, `tag_name`, `commit_sha` | `project_key` | Yes |
 
 ## Parameters
 
@@ -24,7 +27,7 @@ Manage Azure DevOps Git repositories. List repos, browse branches, read files, n
 |-----------|------|-------------|
 | `action` | string | **Required.** The action to perform |
 | `project_key` | string | Project name (required for most actions) |
-| `repo_id` | string | Repository name or ID (required for get, list_branches, get_file, get_tree) |
+| `repo_id` | string | Repository name or ID (required for get, list_branches, get_file, get_tree, list_tags, create_tag) |
 | `file_path` | string | File path within the repo (for get_file, get_tree) |
 | `version` | string | Branch name or commit SHA (for get_file) |
 | `branch_name` | string | New branch name (required for create_branch) |
@@ -32,6 +35,8 @@ Manage Azure DevOps Git repositories. List repos, browse branches, read files, n
 | `author` | string | Filter commits by author (for search_commits) |
 | `from_date` | string | Filter commits from this date (for search_commits) |
 | `to_date` | string | Filter commits to this date (for search_commits) |
+| `tag_name` | string | Tag name (required for create_tag) |
+| `commit_sha` | string | Commit SHA to tag (required for create_tag) |
 
 ## Examples
 
@@ -80,6 +85,26 @@ Manage Azure DevOps Git repositories. List repos, browse branches, read files, n
 }
 ```
 
+### List branch policies
+
+```json
+{
+  "action": "list_policies",
+  "project_key": "MyProject",
+  "repo_id": "backend-api"
+}
+```
+
+### List tags
+
+```json
+{
+  "action": "list_tags",
+  "project_key": "MyProject",
+  "repo_id": "backend-api"
+}
+```
+
 ### Create a branch
 
 ```json
@@ -89,5 +114,17 @@ Manage Azure DevOps Git repositories. List repos, browse branches, read files, n
   "repo_id": "backend-api",
   "branch_name": "feature/new-api",
   "source_branch": "main"
+}
+```
+
+### Create a tag
+
+```json
+{
+  "action": "create_tag",
+  "project_key": "MyProject",
+  "repo_id": "backend-api",
+  "tag_name": "v1.2.0",
+  "commit_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
 }
 ```

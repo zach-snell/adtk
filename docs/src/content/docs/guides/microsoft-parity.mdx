@@ -11,8 +11,9 @@ This page provides a domain-by-domain comparison between adtk and Microsoft's of
 
 | Dimension | adtk | Microsoft azure-devops-mcp |
 |---|---|---|
-| **Total MCP tools** | 13 (consolidated) | ~75 (individual) |
-| **Total actions** | 82 | ~75 |
+| **Total MCP tools** | 14 (consolidated) | ~75 (individual) |
+| **Total actions** | 91 | ~75 |
+| **MCP prompts** | 4 built-in | None |
 | **CLI** | 15 command groups | None |
 | **Language** | Go | TypeScript |
 | **Runtime** | Single static binary | Node.js |
@@ -56,6 +57,9 @@ This page provides a domain-by-domain comparison between adtk and Microsoft's of
 | Get tree | `manage_repos` → `get_tree` | `get_repository_tree` |
 | Create branch | `manage_repos` → `create_branch` | `create_branch` |
 | Search commits | `manage_repos` → `search_commits` | `get_commits` |
+| List branch policies | `manage_repos` → `list_policies` | N/A |
+| List tags | `manage_repos` → `list_tags` | N/A |
+| Create tag | `manage_repos` → `create_tag` | N/A |
 
 ### Pull Requests
 
@@ -87,6 +91,9 @@ This page provides a domain-by-domain comparison between adtk and Microsoft's of
 | Get specific log | `manage_pipelines` → `get_log` | N/A |
 | Get build changes | `manage_pipelines` → `get_build_changes` | N/A |
 | List definitions | `manage_pipelines` → `list_definitions` | N/A |
+| List variable groups | `manage_pipelines` → `list_variable_groups` | N/A |
+| Get variable group | `manage_pipelines` → `get_variable_group` | N/A |
+| List environments | `manage_pipelines` → `list_environments` | N/A |
 
 ### Boards & Iterations
 
@@ -150,6 +157,8 @@ Boards and iterations are a complete gap in Microsoft's official MCP server. adt
 | Code search | `manage_search` → `code` | `search_code` |
 | Work item search | `manage_search` → `work_items` | `search_work_items` |
 | Wiki search | `manage_search` → `wiki` | `search_wiki` |
+| Get saved query | `manage_search` → `get_query` | N/A |
+| Run saved query | `manage_search` → `run_query` | N/A |
 
 ### Projects & Users
 
@@ -163,9 +172,24 @@ Boards and iterations are a complete gap in Microsoft's official MCP server. adt
 | Get current user | `manage_users` → `get_current` | `get_me` |
 | Search users | `manage_users` → `search` | N/A |
 
-## Where Microsoft Leads
+### Metrics & Intelligence
 
-Microsoft's MCP server has some capabilities not yet in adtk:
+| Capability | adtk | Microsoft |
+|---|---|---|
+| Work item metrics | `manage_metrics` → `get_metrics` | N/A |
+| Cycle time | Computed from revision history | N/A |
+| Lead time | Computed from revision history | N/A |
+| Time-in-status | Computed from revision history | N/A |
+| MCP prompts | 4 built-in (sprint, PR, pipeline, release) | N/A |
+| Git branch detection | Auto-detect work item from branch | N/A |
+
+<Aside type="tip">
+adtk now exceeds Microsoft's official MCP server in every category. The metrics, prompts, and git branch detection features have no equivalent in the Microsoft offering.
+</Aside>
+
+## Where Microsoft Differs
+
+Microsoft's MCP server takes a different approach in some areas:
 
 | Feature | Status |
 |---|---|
@@ -180,7 +204,7 @@ adtk's PAT-first approach is intentional. PATs are self-service and don't requir
 
 | Aspect | adtk | Microsoft |
 |---|---|---|
-| Tool registration | 13 consolidated tools with `action` parameter | ~75 individual tool registrations |
+| Tool registration | 14 consolidated tools with `action` parameter | ~75 individual tool registrations |
 | Response format | Flattened, token-optimized | Raw Azure DevOps API responses |
 | Write protection | `ADTK_ENABLE_WRITES` gate | None |
 | Rate limiting | Built-in token bucket | None |

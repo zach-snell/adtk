@@ -4,7 +4,7 @@ description: MCP tool for managing Azure DevOps CI/CD pipelines
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, trigger builds, retrieve logs, and view build changes.
+Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, trigger builds, retrieve logs, view build changes, manage variable groups, and list deployment environments.
 
 ## Actions
 
@@ -19,6 +19,9 @@ Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, tr
 | `get_log` | Get a specific log entry | `project_key`, `pipeline_id`, `run_id`, `log_id` | | No |
 | `get_build_changes` | Get changes associated with a build | `project_key`, `build_id` | | No |
 | `list_definitions` | List build definitions | `project_key` | | No |
+| `list_variable_groups` | List variable groups in a project | `project_key` | | No |
+| `get_variable_group` | Get a variable group by ID | `project_key`, `group_id` | | No |
+| `list_environments` | List deployment environments | `project_key` | | No |
 
 ## Parameters
 
@@ -30,6 +33,7 @@ Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, tr
 | `run_id` | integer | Run ID (required for get_run, get_logs, get_log) |
 | `log_id` | integer | Log ID (required for get_log) |
 | `build_id` | integer | Build ID (required for get_build_changes) |
+| `group_id` | integer | Variable group ID (required for get_variable_group) |
 | `branch` | string | Branch name to run pipeline on (for trigger) |
 | `top` | integer | Max results to return |
 
@@ -97,5 +101,33 @@ Manage Azure DevOps CI/CD pipelines. List pipeline definitions, inspect runs, tr
   "action": "get_build_changes",
   "project_key": "MyProject",
   "build_id": 500
+}
+```
+
+### List variable groups
+
+```json
+{
+  "action": "list_variable_groups",
+  "project_key": "MyProject"
+}
+```
+
+### Get a variable group
+
+```json
+{
+  "action": "get_variable_group",
+  "project_key": "MyProject",
+  "group_id": 1
+}
+```
+
+### List deployment environments
+
+```json
+{
+  "action": "list_environments",
+  "project_key": "MyProject"
 }
 ```

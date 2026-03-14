@@ -4,7 +4,7 @@ description: Manage Azure DevOps Git repositories from the CLI
 ---
 import { Aside } from '@astrojs/starlight/components';
 
-The `repos` command group lets you list, inspect, and browse Git repositories in Azure DevOps.
+The `repos` command group lets you list, inspect, browse Git repositories, view branch policies, and manage tags in Azure DevOps.
 
 ## Shared Flags
 
@@ -114,4 +114,41 @@ adtk repos commits <repo> [--project myproject] [--author name] [--from date] [-
 
 ```bash
 adtk repos commits backend-api -p MyProject --author "Jane" --from "2025-01-01"
+```
+
+## policies
+
+List branch policies for a repository. Outputs raw JSON.
+
+```bash
+adtk repos policies <repo> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk repos policies backend-api -p MyProject
+```
+
+## tags
+
+List tags in a repository.
+
+```bash
+adtk repos tags <repo> [--project myproject]
+```
+
+**Example:**
+
+```bash
+adtk repos tags backend-api -p MyProject
+```
+
+```
+NAME          OBJECT ID
+v1.0.0        a1b2c3d4e5f6
+v1.1.0        f6e5d4c3b2a1
+v1.2.0        b2c3d4e5f6a7
+
+3 tags
 ```

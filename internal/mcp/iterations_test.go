@@ -97,3 +97,101 @@ func TestManageIterationsHandler_UnknownAction(t *testing.T) {
 	}
 	assertResultError(t, result, "unknown action")
 }
+
+func TestManageIterationsHandler_Create(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"id":"new-iter","name":"Sprint 5"}`))
+	handler := ManageIterationsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "create",
+		ProjectKey: "TestProject",
+		Name:       "Sprint 5",
+		StartDate:  "2024-01-15",
+		FinishDate: "2024-01-29",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Sprint 5")
+}
+
+func TestManageIterationsHandler_Create_WritesDisabled(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageIterationsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "create",
+		ProjectKey: "TestProject",
+		Name:       "Sprint 5",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "ADTK_ENABLE_WRITES=true")
+}
+
+func TestManageIterationsHandler_Create_MissingName(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageIterationsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "create",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "name is required")
+}
+
+func TestManageIterationsHandler_Create_InvalidDate(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, nil)
+	handler := ManageIterationsHandler(c, true)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "create",
+		ProjectKey: "TestProject",
+		Name:       "Sprint X",
+		StartDate:  "not-a-date",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultError(t, result, "invalid start_date format")
+}
+
+func TestManageIterationsHandler_GetTeamSettings(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"backlogIteration":{"id":"root"},"defaultIteration":{"id":"current-iter","name":"Sprint 3"},"bugsBehavior":"asRequirements"}`))
+	handler := ManageIterationsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "get_team_settings",
+		ProjectKey: "TestProject",
+		Team:       "MyTeam",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "Sprint 3")
+	assertResultSuccess(t, result, "asRequirements")
+}
+
+func TestManageIterationsHandler_GetTeamSettings_NoTeam(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, jsonHandler(`{"backlogIteration":{"id":"root"},"defaultIteration":{"id":"iter-1"}}`))
+	handler := ManageIterationsHandler(c, false)
+
+	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
+		Action:     "get_team_settings",
+		ProjectKey: "TestProject",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResultSuccess(t, result, "iter-1")
+}

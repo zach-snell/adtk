@@ -18,7 +18,8 @@ adtk solves this with a single Go binary that works equally well for human opera
 | Feature | adtk | Microsoft azure-devops-mcp |
 |---|---|---|
 | **Language** | Go (single static binary) | TypeScript (Node.js runtime) |
-| **MCP Tools / Actions** | 13 tools / 82 actions | ~75 individual tools |
+| **MCP Tools / Actions** | 14 tools / 91 actions | ~75 individual tools |
+| **MCP Prompts** | 4 built-in prompts | None |
 | **CLI mode** | Full CLI with 15 command groups | No |
 | **Auth** | PAT (self-service, no admin) | Azure AD (requires admin consent) |
 | **Startup time** | ~50ms | ~2s |
@@ -26,6 +27,11 @@ adtk solves this with a single Go binary that works equally well for human opera
 | **Boards & Iterations** | Full support | No |
 | **Test Plans** | Full support | No |
 | **Advanced Security** | Alert listing & details | No |
+| **Metrics** | Cycle time, lead time, time-in-status | No |
+| **Git branch detection** | Auto-detect work items from branch | No |
+| **Branch policies & tags** | List policies, list/create tags | No |
+| **Variable groups & environments** | List/get variable groups, environments | No |
+| **Saved queries** | Get and run saved queries | No |
 | **Attachments** | Upload, download, list | No |
 | **Write protection** | `ADTK_ENABLE_WRITES` gate | None |
 | **Rate limiting** | Built-in token bucket | None |
@@ -71,7 +77,7 @@ adtk has a clean dual-mode architecture. Both the CLI and MCP server share the s
     Personal Access Tokens require no admin approval. Auth is `Basic base64(":" + pat)` — simple, portable, and works everywhere.
   </Card>
   <Card title="Consolidated Tools" icon="puzzle">
-    Rather than 75+ individual MCP tools, adtk groups related operations into 13 tools with an `action` parameter. This keeps the tool registry clean for AI agents.
+    Rather than 75+ individual MCP tools, adtk groups related operations into 14 tools with an `action` parameter. This keeps the tool registry clean for AI agents.
   </Card>
   <Card title="Response Flattening" icon="document">
     Work item fields like `System.Title` and `Microsoft.VSTS.Common.Priority` are automatically converted to `title` and `priority`. The `_links` noise is stripped. AI agents get token-efficient payloads.

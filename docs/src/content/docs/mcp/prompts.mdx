@@ -1,0 +1,158 @@
+---
+title: MCP Prompts
+description: Built-in MCP prompts for multi-step Azure DevOps analysis workflows
+---
+import { Aside } from '@astrojs/starlight/components';
+
+adtk registers 4 MCP prompts that guide AI agents through multi-step analysis workflows. Prompts are templates that instruct the agent which tools to call and how to present the results.
+
+<Aside type="tip">
+MCP prompts are different from tools. A prompt is a structured template that the AI agent uses to orchestrate multiple tool calls. The agent calls the prompt, receives step-by-step instructions, and then executes the tools itself.
+</Aside>
+
+## sprint_summary
+
+Generate a sprint/iteration summary for an Azure DevOps project.
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project` | Yes | Azure DevOps project name |
+| `team` | No | Team name (scopes to a specific team) |
+| `iteration` | No | Iteration path or name (defaults to current iteration) |
+
+### What it does
+
+1. Fetches the current (or specified) iteration via `manage_iterations`
+2. Gets all work items in the iteration via `manage_work_items` → `iteration_items`
+3. Gets the board workflow via `manage_boards` → `get_columns`
+4. Categorizes work items by state and type
+
+### Output format
+
+- Sprint name, dates, and timeline progress
+- Completion percentage (done / total)
+- Work items grouped by state
+- Breakdown by work item type
+- Items at risk (active but not updated recently)
+- Blocked items or impediments
+- Team velocity summary
+
+### Example usage
+
+```
+Prompt: sprint_summary
+Arguments: { "project": "MyProject", "team": "Backend Team" }
+```
+
+---
+
+## pr_review_digest
+
+Generate a PR review digest for an Azure DevOps repository.
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project` | Yes | Azure DevOps project name |
+| `repo` | Yes | Repository name |
+
+### What it does
+
+1. Lists all active PRs via `manage_pull_requests` → `list`
+2. Checks reviewer status for each PR via `manage_pull_requests` → `list_reviewers`
+3. Analyzes review status, age, and potential issues
+
+### Output format
+
+- Total open PRs and summary statistics
+- PRs needing review (no reviewers or pending votes)
+- PRs with requested changes (rejected votes)
+- PRs ready to merge (all approved)
+- Stale PRs (open > 7 days without activity)
+- PRs by author showing review workload distribution
+
+### Example usage
+
+```
+Prompt: pr_review_digest
+Arguments: { "project": "MyProject", "repo": "backend-api" }
+```
+
+---
+
+## pipeline_health
+
+Analyze CI/CD pipeline health for an Azure DevOps project.
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project` | Yes | Azure DevOps project name |
+| `pipeline_id` | No | Specific pipeline ID to analyze (omit for all pipelines) |
+
+### What it does
+
+1. Lists pipelines (or gets a specific one) via `manage_pipelines`
+2. Gets recent runs via `manage_pipelines` → `list_runs` (top 20)
+3. For failures, inspects run details via `manage_pipelines` → `get_run`
+4. Optionally inspects build logs via `manage_pipelines` → `get_logs`
+
+### Output format
+
+- Overall health score (pass rate)
+- Success/failure rate breakdown
+- Average build duration and trends
+- Most common failure reasons
+- Pipelines with consecutive failures
+- Longest running pipelines
+- Recommendations for improving reliability
+
+### Example usage
+
+```
+Prompt: pipeline_health
+Arguments: { "project": "MyProject", "pipeline_id": "42" }
+```
+
+---
+
+## release_readiness
+
+Assess release readiness for an Azure DevOps project.
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project` | Yes | Azure DevOps project name |
+| `iteration` | No | Iteration path or name (defaults to current iteration) |
+
+### What it does
+
+1. Fetches the current (or specified) iteration via `manage_iterations`
+2. Gets all work items in the iteration via `manage_work_items` → `iteration_items`
+3. Queries open bugs via `manage_search` → `wiql`
+4. Lists unmerged PRs via `manage_pull_requests` → `list`
+5. Checks recent build status via `manage_pipelines` → `list_runs`
+
+### Output format
+
+- Overall readiness score (Ready / At Risk / Not Ready)
+- Work item completion: completed vs remaining
+- Open bugs: count and severity breakdown
+- Unmerged PRs: list with status and blockers
+- Build status: latest pipeline results
+- Test results from recent builds
+- Blockers and risks
+- Go/No-Go recommendation with justification
+
+### Example usage
+
+```
+Prompt: release_readiness
+Arguments: { "project": "MyProject", "iteration": "Sprint 24" }
+```
