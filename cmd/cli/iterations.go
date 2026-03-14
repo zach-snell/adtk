@@ -84,9 +84,29 @@ var iterationsCurrentCmd = &cobra.Command{
 	},
 }
 
+var iterationsSettingsCmd = &cobra.Command{
+	Use:   "settings",
+	Short: "Get team iteration settings",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		team, _ := cmd.Flags().GetString("team")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		settings, err := c.GetTeamSettings(project, team)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintJSON(settings)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(iterationsCmd)
-	iterationsCmd.AddCommand(iterationsListCmd, iterationsCurrentCmd)
+	iterationsCmd.AddCommand(iterationsListCmd, iterationsCurrentCmd, iterationsSettingsCmd)
 
 	iterationsCmd.PersistentFlags().StringP("project", "p", "", "Project name (required)")
 	iterationsCmd.PersistentFlags().StringP("team", "t", "", "Team name (optional)")

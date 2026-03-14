@@ -110,9 +110,43 @@ var reposTreeCmd = &cobra.Command{
 	},
 }
 
+var reposCommitsCmd = &cobra.Command{
+	Use:   "commits <repo>",
+	Short: "Search commits in a repository",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		author, _ := cmd.Flags().GetString("author")
+		from, _ := cmd.Flags().GetString("from")
+		to, _ := cmd.Flags().GetString("to")
+
+		params := map[string]string{}
+		if author != "" {
+			params["author"] = author
+		}
+		if from != "" {
+			params["fromDate"] = from
+		}
+		if to != "" {
+			params["toDate"] = to
+		}
+		commits, err := c.SearchCommits(project, args[0], params)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintJSON(commits)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(reposCmd)
-	reposCmd.AddCommand(reposListCmd, reposGetCmd, reposBranchesCmd, reposTreeCmd)
+	reposCmd.AddCommand(reposListCmd, reposGetCmd, reposBranchesCmd, reposTreeCmd, reposCommitsCmd)
 
 	reposCmd.PersistentFlags().StringP("project", "p", "", "Project name")
+
+	reposCommitsCmd.Flags().String("author", "", "Filter by commit author")
+	reposCommitsCmd.Flags().String("from", "", "Filter commits from date")
+	reposCommitsCmd.Flags().String("to", "", "Filter commits to date")
 }

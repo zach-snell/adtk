@@ -111,9 +111,28 @@ var pipelinesRunsCmd = &cobra.Command{
 	},
 }
 
+var pipelinesDefinitionsCmd = &cobra.Command{
+	Use:   "definitions",
+	Short: "List build definitions",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		defs, err := c.ListBuildDefinitions(project)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintJSON(defs)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(pipelinesCmd)
-	pipelinesCmd.AddCommand(pipelinesListCmd, pipelinesGetCmd, pipelinesRunsCmd)
+	pipelinesCmd.AddCommand(pipelinesListCmd, pipelinesGetCmd, pipelinesRunsCmd, pipelinesDefinitionsCmd)
 
 	pipelinesCmd.PersistentFlags().StringP("project", "p", "", "Project name (required)")
 	pipelinesCmd.PersistentFlags().Int("top", 25, "Max results to return")

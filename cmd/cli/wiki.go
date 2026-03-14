@@ -65,9 +65,41 @@ var wikiGetCmd = &cobra.Command{
 	},
 }
 
+var wikiPagesCmd = &cobra.Command{
+	Use:   "pages <wiki-id>",
+	Short: "List pages in a wiki",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		pages, err := c.ListWikiPages(project, args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, pages, func() {
+			t := NewTable()
+			t.Header("ID", "Path", "Order", "Parent")
+			for _, p := range pages {
+				isParent := "no"
+				if p.IsParentPage {
+					isParent = "yes"
+				}
+				t.Row(fmt.Sprintf("%d", p.ID), p.Path, fmt.Sprintf("%d", p.Order), isParent)
+			}
+			t.Flush()
+			fmt.Printf("\n%d pages\n", len(pages))
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(wikiCmd)
-	wikiCmd.AddCommand(wikiListCmd, wikiGetCmd)
+	wikiCmd.AddCommand(wikiListCmd, wikiGetCmd, wikiPagesCmd)
 
 	wikiCmd.PersistentFlags().StringP("project", "p", "", "Project name (required)")
 }

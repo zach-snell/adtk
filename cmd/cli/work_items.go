@@ -102,9 +102,70 @@ var wiTypesCmd = &cobra.Command{
 	},
 }
 
+var wiMyCmd = &cobra.Command{
+	Use:   "my",
+	Short: "List my assigned work items",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		items, err := c.GetMyWorkItems(project, "", false, 50)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, items, func() {
+			t := NewTable()
+			t.Header("ID", "Type", "Title", "State", "Assigned To")
+			for _, wi := range items {
+				wiType := fieldStr(wi.Fields, "System.WorkItemType")
+				title := fieldStr(wi.Fields, "System.Title")
+				state := fieldStr(wi.Fields, "System.State")
+				assignedTo := fieldStr(wi.Fields, "System.AssignedTo")
+				t.Row(fmt.Sprintf("%d", wi.ID), wiType, Truncate(title, 50), state, assignedTo)
+			}
+			t.Flush()
+			fmt.Printf("\n%d work items\n", len(items))
+		})
+	},
+}
+
+var wiCommentsCmd = &cobra.Command{
+	Use:   "comments <id>",
+	Short: "List comments on a work item",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "invalid work item ID: %s\n", args[0])
+			os.Exit(1)
+		}
+		project, _ := cmd.Flags().GetString("project")
+		comments, err := c.GetWorkItemComments(project, id)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, comments, func() {
+			t := NewTable()
+			t.Header("ID", "Author", "Date", "Text")
+			for _, c := range comments.Comments {
+				t.Row(
+					fmt.Sprintf("%d", c.ID),
+					c.CreatedBy.DisplayName,
+					c.CreatedDate.Format("2006-01-02 15:04"),
+					Truncate(c.Text, 60),
+				)
+			}
+			t.Flush()
+			fmt.Printf("\n%d comments\n", comments.TotalCount)
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(workItemsCmd)
-	workItemsCmd.AddCommand(wiGetCmd, wiListCmd, wiTypesCmd)
+	workItemsCmd.AddCommand(wiGetCmd, wiListCmd, wiTypesCmd, wiMyCmd, wiCommentsCmd)
 
 	workItemsCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 
