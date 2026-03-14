@@ -10,11 +10,12 @@ import (
 
 // ManagePipelinesInput defines the input schema for the manage_pipelines tool.
 type ManagePipelinesInput struct {
-	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_runs', 'get_run', 'trigger', 'get_logs', 'get_log'"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_runs', 'get_run', 'trigger', 'get_logs', 'get_log', 'get_build_changes', 'list_definitions'"`
 	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
 	PipelineID int    `json:"pipeline_id,omitempty" jsonschema:"Pipeline ID (required for get, list_runs, trigger, get_logs, get_log)"`
 	RunID      int    `json:"run_id,omitempty" jsonschema:"Run ID (required for get_run, get_logs, get_log)"`
 	LogID      int    `json:"log_id,omitempty" jsonschema:"Log ID (required for get_log)"`
+	BuildID    int    `json:"build_id,omitempty" jsonschema:"Build ID (required for get_build_changes)"`
 	Branch     string `json:"branch,omitempty" jsonschema:"Branch name to run pipeline on (for trigger)"`
 	Top        int    `json:"top,omitempty" jsonschema:"Max results to return"`
 }
@@ -90,6 +91,21 @@ func ManagePipelinesHandler(c *devops.Client, enableWrites bool) func(context.Co
 				return resultError(fmt.Sprintf("getting pipeline log: %v", err))
 			}
 			return resultText(string(data))
+		case "get_build_changes":
+			if input.BuildID == 0 {
+				return resultError("build_id is required for 'get_build_changes' action")
+			}
+			changes, err := c.GetBuildChanges(input.ProjectKey, input.BuildID)
+			if err != nil {
+				return resultError(fmt.Sprintf("getting build changes: %v", err))
+			}
+			return resultJSON(changes)
+		case "list_definitions":
+			defs, err := c.ListBuildDefinitions(input.ProjectKey)
+			if err != nil {
+				return resultError(fmt.Sprintf("listing build definitions: %v", err))
+			}
+			return resultJSON(defs)
 		default:
 			return resultError(fmt.Sprintf("unknown action: %s", input.Action))
 		}

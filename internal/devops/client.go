@@ -268,6 +268,11 @@ func (c *Client) Patch(project, path string, body interface{}) ([]byte, error) {
 	return c.patchWith(project, path, body, "application/json")
 }
 
+// PatchPreview performs a PATCH request with a preview API version.
+func (c *Client) PatchPreview(project, path string, body interface{}) ([]byte, error) {
+	return c.patchWithVersion(project, path, body, "application/json", DefaultAPIVersion+"-preview")
+}
+
 // PatchJSONPatch performs a PATCH request with JSON Patch content type.
 // Used for work item updates which require application/json-patch+json.
 func (c *Client) PatchJSONPatch(project, path string, body interface{}) ([]byte, error) {
@@ -275,6 +280,10 @@ func (c *Client) PatchJSONPatch(project, path string, body interface{}) ([]byte,
 }
 
 func (c *Client) patchWith(project, path string, body interface{}, contentType string) ([]byte, error) {
+	return c.patchWithVersion(project, path, body, contentType, "")
+}
+
+func (c *Client) patchWithVersion(project, path string, body interface{}, contentType, apiVersion string) ([]byte, error) {
 	var bodyData []byte
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -284,7 +293,13 @@ func (c *Client) patchWith(project, path string, body interface{}, contentType s
 		bodyData = b
 	}
 
-	requestURL := c.buildURL(HostMain, project, path, nil)
+	var query url.Values
+	if apiVersion != "" {
+		query = url.Values{}
+		query.Set("api-version", apiVersion)
+	}
+
+	requestURL := c.buildURL(HostMain, project, path, query)
 	resp, err := c.do(http.MethodPatch, requestURL, bodyData, contentType)
 	if err != nil {
 		return nil, err

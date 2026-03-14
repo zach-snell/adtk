@@ -10,7 +10,7 @@ import (
 
 // ManageWikiInput defines the input schema for the manage_wiki tool.
 type ManageWikiInput struct {
-	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get_page', 'create_page', 'update_page', 'delete_page'"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get_page', 'list_pages', 'create_page', 'update_page', 'delete_page'"`
 	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
 	WikiID     string `json:"wiki_id,omitempty" jsonschema:"Wiki name or ID (required for page operations)"`
 	PagePath   string `json:"page_path,omitempty" jsonschema:"Wiki page path e.g. /Home or /Design/Architecture (required for page operations)"`
@@ -32,6 +32,15 @@ func ManageWikiHandler(c *devops.Client, enableWrites bool) func(context.Context
 				return resultError(fmt.Sprintf("listing wikis: %v", err))
 			}
 			return resultJSON(wikis)
+		case "list_pages":
+			if input.WikiID == "" {
+				return resultError("wiki_id is required for 'list_pages' action")
+			}
+			pages, err := c.ListWikiPages(input.ProjectKey, input.WikiID)
+			if err != nil {
+				return resultError(fmt.Sprintf("listing wiki pages: %v", err))
+			}
+			return resultJSON(pages)
 		case "get_page":
 			if input.WikiID == "" || input.PagePath == "" {
 				return resultError("wiki_id and page_path are required for 'get_page' action")

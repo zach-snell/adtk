@@ -210,6 +210,156 @@ func (c *Client) GetWorkItemUpdates(project string, id int) ([]map[string]interf
 	return result.Value, nil
 }
 
+// UpdateWorkItemsBatch updates multiple work items. Each item has an ID and patch operations.
+// Items are updated sequentially; the first error stops processing.
+func (c *Client) UpdateWorkItemsBatch(project string, updates []BatchWorkItemUpdate) ([]WorkItem, error) {
+	results := make([]WorkItem, 0, len(updates))
+	for _, u := range updates {
+		wi, err := c.UpdateWorkItem(project, u.ID, u.Ops)
+		if err != nil {
+			return results, fmt.Errorf("updating work item %d: %w", u.ID, err)
+		}
+		results = append(results, *wi)
+	}
+	return results, nil
+}
+
+// AddChildWorkItems creates child work items under a parent.
+func (c *Client) AddChildWorkItems(project string, parentID int, workItemType string, titles []string) ([]WorkItem, error) {
+	parentURL := fmt.Sprintf("https://%s/%s/_apis/wit/workitems/%d", HostMain, c.organization, parentID)
+	results := make([]WorkItem, 0, len(titles))
+	for _, title := range titles {
+		ops := []JSONPatchOp{
+			{Op: "add", Path: "/fields/System.Title", Value: title},
+			{Op: "add", Path: "/relations/-", Value: map[string]interface{}{
+				"rel": "System.LinkTypes.Hierarchy-Reverse",
+				"url": parentURL,
+			}},
+		}
+		wi, err := c.CreateWorkItem(project, workItemType, ops)
+		if err != nil {
+			return results, fmt.Errorf("creating child %q: %w", title, err)
+		}
+		results = append(results, *wi)
+	}
+	return results, nil
+}
+
+// LinkWorkItems links two work items together using the specified link type.
+// Common link types: System.LinkTypes.Hierarchy-Forward (parent→child),
+// System.LinkTypes.Related, System.LinkTypes.Dependency-Forward.
+func (c *Client) LinkWorkItems(project string, sourceID, targetID int, linkType string) (*WorkItem, error) {
+	targetURL := fmt.Sprintf("https://%s/%s/_apis/wit/workitems/%d", HostMain, c.organization, targetID)
+	ops := []JSONPatchOp{
+		{Op: "add", Path: "/relations/-", Value: map[string]interface{}{
+			"rel": linkType,
+			"url": targetURL,
+		}},
+	}
+	return c.UpdateWorkItem(project, sourceID, ops)
+}
+
+// UnlinkWorkItem removes a relation from a work item by relation index.
+func (c *Client) UnlinkWorkItem(project string, id, relationIndex int) (*WorkItem, error) {
+	ops := []JSONPatchOp{
+		{Op: "remove", Path: fmt.Sprintf("/relations/%d", relationIndex)},
+	}
+	return c.UpdateWorkItem(project, id, ops)
+}
+
+// AddArtifactLink adds an artifact link (commit, build, PR, etc.) to a work item.
+func (c *Client) AddArtifactLink(project string, workItemID int, artifactURI, linkType, comment string) (*WorkItem, error) {
+	attrs := map[string]interface{}{
+		"name": linkType,
+	}
+	if comment != "" {
+		attrs["comment"] = comment
+	}
+	ops := []JSONPatchOp{
+		{Op: "add", Path: "/relations/-", Value: map[string]interface{}{
+			"rel":        "ArtifactLink",
+			"url":        artifactURI,
+			"attributes": attrs,
+		}},
+	}
+	return c.UpdateWorkItem(project, workItemID, ops)
+}
+
+// GetMyWorkItems gets work items assigned to the current user.
+func (c *Client) GetMyWorkItems(project, workItemType string, includeCompleted bool, top int) ([]WorkItem, error) {
+	wiql := fmt.Sprintf(
+		"SELECT [System.Id] FROM WorkItems WHERE [System.AssignedTo] = @Me AND [System.TeamProject] = '%s'",
+		project,
+	)
+	if workItemType != "" {
+		wiql += fmt.Sprintf(" AND [System.WorkItemType] = '%s'", workItemType)
+	}
+	if !includeCompleted {
+		wiql += " AND [System.State] <> 'Closed' AND [System.State] <> 'Done' AND [System.State] <> 'Removed'"
+	}
+	wiql += " ORDER BY [System.ChangedDate] DESC"
+
+	return c.WIQLAndFetch(project, wiql, nil, top)
+}
+
+// GetWorkItemsForIteration gets work items in a specific iteration.
+// Uses the team settings API: /{project}/{team}/_apis/work/teamsettings/iterations/{iterationId}/workitems
+func (c *Client) GetWorkItemsForIteration(project, team, iterationID string) ([]WorkItem, error) {
+	path := fmt.Sprintf("/work/teamsettings/iterations/%s/workitems", iterationID)
+
+	scopedProject := project
+	if team != "" {
+		scopedProject = fmt.Sprintf("%s/%s", project, team)
+	}
+
+	data, err := c.Get(scopedProject, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting iteration work items: %w", err)
+	}
+
+	var result IterationWorkItems
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling iteration work items: %w", err)
+	}
+
+	// Collect unique work item IDs from targets
+	idSet := make(map[int]bool)
+	for _, rel := range result.WorkItemRelations {
+		if rel.Target != nil {
+			idSet[rel.Target.ID] = true
+		}
+	}
+
+	if len(idSet) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int, 0, len(idSet))
+	for id := range idSet {
+		ids = append(ids, id)
+	}
+
+	return c.GetWorkItemsBatch(project, ids, nil)
+}
+
+// UpdateWorkItemComment updates an existing comment on a work item.
+// The comments API requires the -preview suffix on api-version.
+func (c *Client) UpdateWorkItemComment(project string, workItemID, commentID int, text string) (*WorkItemComment, error) {
+	path := fmt.Sprintf("/wit/workitems/%d/comments/%d", workItemID, commentID)
+	body := map[string]string{"text": text}
+	data, err := c.PatchPreview(project, path, body)
+	if err != nil {
+		return nil, fmt.Errorf("updating comment: %w", err)
+	}
+
+	var result WorkItemComment
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling comment: %w", err)
+	}
+
+	return &result, nil
+}
+
 // BuildJSONPatchOps constructs JSON Patch operations from a map of field names to values.
 // Field names are automatically prefixed with "/fields/System." if they don't start with "/".
 func BuildJSONPatchOps(fields map[string]interface{}) []JSONPatchOp {

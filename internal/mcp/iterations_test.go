@@ -10,7 +10,7 @@ import (
 func TestManageIterationsHandler_List(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"count":2,"value":[{"id":"i1","name":"Sprint 1","path":"\\Project\\Sprint 1"},{"id":"i2","name":"Sprint 2","path":"\\Project\\Sprint 2"}]}`))
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action:     "list",
@@ -26,7 +26,7 @@ func TestManageIterationsHandler_List(t *testing.T) {
 func TestManageIterationsHandler_Get(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"id":"i1","name":"Sprint 1","path":"\\Project\\Sprint 1","attributes":{"timeFrame":"current"}}`))
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action:      "get",
@@ -42,7 +42,7 @@ func TestManageIterationsHandler_Get(t *testing.T) {
 func TestManageIterationsHandler_Get_MissingID(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action:     "get",
@@ -57,7 +57,7 @@ func TestManageIterationsHandler_Get_MissingID(t *testing.T) {
 func TestManageIterationsHandler_GetCurrent(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"count":2,"value":[{"id":"i1","name":"Sprint 1","attributes":{"timeFrame":"past"}},{"id":"i2","name":"Sprint 2","attributes":{"timeFrame":"current"}}]}`))
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action:     "get_current",
@@ -72,7 +72,7 @@ func TestManageIterationsHandler_GetCurrent(t *testing.T) {
 func TestManageIterationsHandler_MissingProject(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action: "list",
@@ -86,7 +86,7 @@ func TestManageIterationsHandler_MissingProject(t *testing.T) {
 func TestManageIterationsHandler_UnknownAction(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageIterationsHandler(c)
+	handler := ManageIterationsHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageIterationsInput{
 		Action:     "invalid",

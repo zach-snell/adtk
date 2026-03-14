@@ -1,7 +1,9 @@
 package devops
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // ListIterations lists all iterations (sprints) for a project/team.
@@ -124,4 +126,50 @@ func (c *Client) GetBoardColumns(project, team, boardID string) ([]BoardColumn, 
 		return nil, err
 	}
 	return result.Value, nil
+}
+
+// CreateIteration creates a new iteration under a project's classification nodes.
+func (c *Client) CreateIteration(project, name string, startDate, finishDate *time.Time) error {
+	path := "/wit/classificationnodes/Iterations"
+	body := map[string]interface{}{
+		"name": name,
+	}
+	if startDate != nil || finishDate != nil {
+		attrs := map[string]interface{}{}
+		if startDate != nil {
+			attrs["startDate"] = startDate.Format(time.RFC3339)
+		}
+		if finishDate != nil {
+			attrs["finishDate"] = finishDate.Format(time.RFC3339)
+		}
+		body["attributes"] = attrs
+	}
+	_, err := c.Post(project, path, body)
+	if err != nil {
+		return fmt.Errorf("creating iteration: %w", err)
+	}
+	return nil
+}
+
+// GetTeamSettings gets team settings including default iteration and area path.
+func (c *Client) GetTeamSettings(project, team string) (map[string]interface{}, error) {
+	path := "/work/teamsettings"
+	var data []byte
+	var err error
+
+	if team != "" {
+		teamProject := fmt.Sprintf("%s/%s", project, team)
+		data, err = c.Get(teamProject, path, nil)
+	} else {
+		data, err = c.Get(project, path, nil)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("getting team settings: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling team settings: %w", err)
+	}
+	return result, nil
 }

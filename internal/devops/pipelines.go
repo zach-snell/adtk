@@ -83,3 +83,38 @@ func (c *Client) GetPipelineLog(project string, pipelineID, runID, logID int) ([
 	path := fmt.Sprintf("/pipelines/%d/runs/%d/logs/%d", pipelineID, runID, logID)
 	return c.Get(project, path, nil)
 }
+
+// GetBuildChanges gets changes associated with a build.
+// GET /{project}/_apis/build/builds/{buildId}/changes?api-version=7.1
+func (c *Client) GetBuildChanges(project string, buildID int) ([]map[string]interface{}, error) {
+	path := fmt.Sprintf("/build/builds/%d/changes", buildID)
+	data, err := c.Get(project, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting build changes: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling build changes: %w", err)
+	}
+	return resp.Value, nil
+}
+
+// ListBuildDefinitions lists pipeline/build definitions in a project.
+// GET /{project}/_apis/build/definitions?api-version=7.1
+func (c *Client) ListBuildDefinitions(project string) ([]map[string]interface{}, error) {
+	data, err := c.Get(project, "/build/definitions", nil)
+	if err != nil {
+		return nil, fmt.Errorf("listing build definitions: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling build definitions: %w", err)
+	}
+	return resp.Value, nil
+}

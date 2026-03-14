@@ -110,3 +110,92 @@ func (c *Client) ListPRReviewers(project, repoID string, prID int) ([]Reviewer, 
 	}
 	return result.Value, nil
 }
+
+// UpdatePRReviewers adds or removes reviewers on a pull request.
+// action should be "add" or "remove".
+func (c *Client) UpdatePRReviewers(project, repoID string, prID int, reviewerIDs []string, action string) error {
+	basePath := fmt.Sprintf("/git/repositories/%s/pullrequests/%d/reviewers", repoID, prID)
+	switch action {
+	case "add":
+		for _, id := range reviewerIDs {
+			path := fmt.Sprintf("%s/%s", basePath, id)
+			_, err := c.Put(project, path, map[string]interface{}{
+				"id": id,
+			})
+			if err != nil {
+				return fmt.Errorf("adding reviewer %s: %w", id, err)
+			}
+		}
+	case "remove":
+		for _, id := range reviewerIDs {
+			path := fmt.Sprintf("%s/%s", basePath, id)
+			if err := c.Delete(project, path); err != nil {
+				return fmt.Errorf("removing reviewer %s: %w", id, err)
+			}
+		}
+	default:
+		return fmt.Errorf("invalid reviewer action: %s (use 'add' or 'remove')", action)
+	}
+	return nil
+}
+
+// CreatePRThread creates a new comment thread on a pull request, optionally on a specific file and line.
+func (c *Client) CreatePRThread(project, repoID string, prID int, content, filePath string, line int) (*PRThread, error) {
+	path := fmt.Sprintf("/git/repositories/%s/pullrequests/%d/threads", repoID, prID)
+	body := map[string]interface{}{
+		"comments": []map[string]string{
+			{"content": content, "commentType": "text"},
+		},
+		"status": "active",
+	}
+	if filePath != "" {
+		threadContext := map[string]interface{}{
+			"filePath": filePath,
+		}
+		if line > 0 {
+			threadContext["rightFileStart"] = map[string]int{"line": line, "offset": 1}
+			threadContext["rightFileEnd"] = map[string]int{"line": line, "offset": 1}
+		}
+		body["threadContext"] = threadContext
+	}
+
+	data, err := c.Post(project, path, body)
+	if err != nil {
+		return nil, fmt.Errorf("creating PR thread: %w", err)
+	}
+
+	var result PRThread
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling PR thread: %w", err)
+	}
+	return &result, nil
+}
+
+// UpdatePRThread updates the status of a comment thread on a pull request.
+func (c *Client) UpdatePRThread(project, repoID string, prID, threadID int, status string) error {
+	path := fmt.Sprintf("/git/repositories/%s/pullrequests/%d/threads/%d", repoID, prID, threadID)
+	_, err := c.Patch(project, path, map[string]string{"status": status})
+	if err != nil {
+		return fmt.Errorf("updating PR thread: %w", err)
+	}
+	return nil
+}
+
+// ReplyToComment replies to an existing comment thread on a pull request.
+func (c *Client) ReplyToComment(project, repoID string, prID, threadID int, content string) (*PRComment, error) {
+	path := fmt.Sprintf("/git/repositories/%s/pullrequests/%d/threads/%d/comments", repoID, prID, threadID)
+	body := map[string]string{
+		"content":     content,
+		"commentType": "text",
+	}
+	data, err := c.Post(project, path, body)
+	if err != nil {
+		return nil, fmt.Errorf("replying to PR comment: %w", err)
+	}
+
+	var result PRComment
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling PR comment: %w", err)
+	}
+	return &result, nil
+}

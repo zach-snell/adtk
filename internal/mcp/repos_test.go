@@ -10,7 +10,7 @@ import (
 func TestManageReposHandler_List(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"count":2,"value":[{"id":"r1","name":"repo1","remoteUrl":"https://test/repo1"},{"id":"r2","name":"repo2","remoteUrl":"https://test/repo2"}]}`))
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "list",
@@ -26,7 +26,7 @@ func TestManageReposHandler_List(t *testing.T) {
 func TestManageReposHandler_Get(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"id":"r1","name":"repo1","defaultBranch":"refs/heads/main","remoteUrl":"https://test/repo1","size":12345}`))
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "get",
@@ -43,7 +43,7 @@ func TestManageReposHandler_Get(t *testing.T) {
 func TestManageReposHandler_Get_MissingRepoID(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action: "get",
@@ -57,7 +57,7 @@ func TestManageReposHandler_Get_MissingRepoID(t *testing.T) {
 func TestManageReposHandler_ListBranches(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"count":2,"value":[{"name":"refs/heads/main","objectId":"abc123"},{"name":"refs/heads/dev","objectId":"def456"}]}`))
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "list_branches",
@@ -74,7 +74,7 @@ func TestManageReposHandler_ListBranches(t *testing.T) {
 func TestManageReposHandler_GetFile(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"objectId":"abc","path":"/README.md","content":"# Hello","gitObjectType":"blob"}`))
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "get_file",
@@ -91,7 +91,7 @@ func TestManageReposHandler_GetFile(t *testing.T) {
 func TestManageReposHandler_GetFile_MissingPath(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "get_file",
@@ -107,7 +107,7 @@ func TestManageReposHandler_GetFile_MissingPath(t *testing.T) {
 func TestManageReposHandler_GetTree(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, jsonHandler(`{"count":2,"value":[{"path":"/src","gitObjectType":"tree"},{"path":"/README.md","gitObjectType":"blob"}]}`))
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action:     "get_tree",
@@ -124,7 +124,7 @@ func TestManageReposHandler_GetTree(t *testing.T) {
 func TestManageReposHandler_UnknownAction(t *testing.T) {
 	t.Parallel()
 	c := newTestClient(t, nil)
-	handler := ManageReposHandler(c)
+	handler := ManageReposHandler(c, false)
 
 	result, _, err := handler(context.Background(), &mcp.CallToolRequest{}, ManageReposInput{
 		Action: "invalid",

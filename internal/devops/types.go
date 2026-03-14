@@ -114,6 +114,30 @@ type JSONPatchOp struct {
 	From  string      `json:"from,omitempty"`
 }
 
+// BatchWorkItemUpdate holds one item's ID and its patch operations for batch updates.
+type BatchWorkItemUpdate struct {
+	ID  int
+	Ops []JSONPatchOp
+}
+
+// IterationWorkItems is the response for getting work items in an iteration.
+type IterationWorkItems struct {
+	WorkItemRelations []IterationWorkItemRelation `json:"workItemRelations"`
+}
+
+// IterationWorkItemRelation represents a work item reference within an iteration.
+type IterationWorkItemRelation struct {
+	Target *WorkItemReference `json:"target,omitempty"`
+	Source *WorkItemReference `json:"source,omitempty"`
+	Rel    string             `json:"rel,omitempty"`
+}
+
+// WorkItemReference is a lightweight reference to a work item (ID + URL).
+type WorkItemReference struct {
+	ID  int    `json:"id"`
+	URL string `json:"url"`
+}
+
 // WIQLResult is the response from a WIQL query.
 type WIQLResult struct {
 	QueryType       string `json:"queryType"`

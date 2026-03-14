@@ -91,6 +91,39 @@ func (c *Client) UpdateWikiPage(project, wikiID, pagePath, content string, _ int
 	return &result, nil
 }
 
+// ListWikiPages lists pages in a wiki with full recursion.
+// GET /{project}/_apis/wiki/wikis/{wikiId}/pages?api-version=7.1&recursionLevel=full
+func (c *Client) ListWikiPages(project, wikiID string) ([]WikiPage, error) {
+	path := fmt.Sprintf("/wiki/wikis/%s/pages", wikiID)
+	query := url.Values{}
+	query.Set("recursionLevel", "full")
+
+	page, err := GetJSON[WikiPage](c, project, path, query)
+	if err != nil {
+		return nil, fmt.Errorf("listing wiki pages: %w", err)
+	}
+
+	// The API returns a single root page with nested subPages.
+	// Flatten the tree into a list for easier consumption.
+	var pages []WikiPage
+	flattenWikiPages(page, &pages)
+	return pages, nil
+}
+
+// flattenWikiPages recursively flattens a WikiPage tree into a slice.
+func flattenWikiPages(page *WikiPage, out *[]WikiPage) {
+	if page == nil {
+		return
+	}
+	entry := *page
+	subPages := entry.SubPages
+	entry.SubPages = nil
+	*out = append(*out, entry)
+	for i := range subPages {
+		flattenWikiPages(&subPages[i], out)
+	}
+}
+
 // DeleteWikiPage deletes a wiki page by path.
 func (c *Client) DeleteWikiPage(project, wikiID, pagePath string) error {
 	path := fmt.Sprintf("/wiki/wikis/%s/pages", wikiID)
