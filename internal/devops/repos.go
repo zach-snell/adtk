@@ -116,6 +116,98 @@ func (c *Client) resolveSourceBranch(project, repoID, sourceBranch string) (stri
 	return "", fmt.Errorf("source branch %q not found", sourceBranch)
 }
 
+// ListBranchPolicies lists branch policy configurations for a project.
+// Optionally filters by repository ID.
+// GET /{project}/_apis/policy/configurations?api-version=7.1
+func (c *Client) ListBranchPolicies(project, repoID string) ([]map[string]interface{}, error) {
+	data, err := c.Get(project, "/policy/configurations", nil)
+	if err != nil {
+		return nil, fmt.Errorf("listing branch policies: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling policies: %w", err)
+	}
+
+	// Filter by repository if specified
+	if repoID == "" {
+		return resp.Value, nil
+	}
+	return filterPoliciesByRepo(resp.Value, repoID), nil
+}
+
+// filterPoliciesByRepo filters policy configurations to those matching a repo ID.
+func filterPoliciesByRepo(policies []map[string]interface{}, repoID string) []map[string]interface{} {
+	var filtered []map[string]interface{}
+	for _, p := range policies {
+		settings, ok := p["settings"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		scopes, ok := settings["scope"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, s := range scopes {
+			scope, ok := s.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if rid, ok := scope["repositoryId"].(string); ok && rid == repoID {
+				filtered = append(filtered, p)
+				break
+			}
+		}
+	}
+	return filtered
+}
+
+// ListTags lists git tags in a repository.
+// GET /{project}/_apis/git/repositories/{repoId}/refs?filter=tags/&api-version=7.1
+func (c *Client) ListTags(project, repoID string) ([]map[string]interface{}, error) {
+	path := fmt.Sprintf("/git/repositories/%s/refs", repoID)
+	query := url.Values{}
+	query.Set("filter", "tags/")
+
+	data, err := c.Get(project, path, query)
+	if err != nil {
+		return nil, fmt.Errorf("listing tags: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling tags: %w", err)
+	}
+	return resp.Value, nil
+}
+
+// CreateTag creates a git tag pointing to a specific commit.
+// POST /{project}/_apis/git/repositories/{repoId}/refs?api-version=7.1
+func (c *Client) CreateTag(project, repoID, tagName, commitSHA string) error {
+	path := fmt.Sprintf("/git/repositories/%s/refs", repoID)
+	refName := tagName
+	if !strings.HasPrefix(refName, "refs/tags/") {
+		refName = "refs/tags/" + refName
+	}
+	body := []map[string]string{
+		{
+			"name":        refName,
+			"oldObjectId": "0000000000000000000000000000000000000000",
+			"newObjectId": commitSHA,
+		},
+	}
+	_, err := c.Post(project, path, body)
+	if err != nil {
+		return fmt.Errorf("creating tag: %w", err)
+	}
+	return nil
+}
+
 // SearchCommits searches for commits with filters using the commitsbatch API.
 func (c *Client) SearchCommits(project, repoID string, params map[string]string) ([]map[string]interface{}, error) {
 	path := fmt.Sprintf("/git/repositories/%s/commitsbatch", repoID)

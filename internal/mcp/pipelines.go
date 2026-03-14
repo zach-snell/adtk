@@ -10,7 +10,7 @@ import (
 
 // ManagePipelinesInput defines the input schema for the manage_pipelines tool.
 type ManagePipelinesInput struct {
-	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_runs', 'get_run', 'trigger', 'get_logs', 'get_log', 'get_build_changes', 'list_definitions'"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_runs', 'get_run', 'trigger', 'get_logs', 'get_log', 'get_build_changes', 'list_definitions', 'list_variable_groups', 'get_variable_group', 'list_environments'"`
 	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project name (required)"`
 	PipelineID int    `json:"pipeline_id,omitempty" jsonschema:"Pipeline ID (required for get, list_runs, trigger, get_logs, get_log)"`
 	RunID      int    `json:"run_id,omitempty" jsonschema:"Run ID (required for get_run, get_logs, get_log)"`
@@ -18,6 +18,7 @@ type ManagePipelinesInput struct {
 	BuildID    int    `json:"build_id,omitempty" jsonschema:"Build ID (required for get_build_changes)"`
 	Branch     string `json:"branch,omitempty" jsonschema:"Branch name to run pipeline on (for trigger)"`
 	Top        int    `json:"top,omitempty" jsonschema:"Max results to return"`
+	GroupID    int    `json:"group_id,omitempty" jsonschema:"Variable group ID (required for get_variable_group)"`
 }
 
 // ManagePipelinesHandler returns the handler for the manage_pipelines tool.
@@ -106,6 +107,27 @@ func ManagePipelinesHandler(c *devops.Client, enableWrites bool) func(context.Co
 				return resultError(fmt.Sprintf("listing build definitions: %v", err))
 			}
 			return resultJSON(defs)
+		case "list_variable_groups":
+			groups, err := c.ListVariableGroups(input.ProjectKey)
+			if err != nil {
+				return resultError(fmt.Sprintf("listing variable groups: %v", err))
+			}
+			return resultJSON(groups)
+		case "get_variable_group":
+			if input.GroupID == 0 {
+				return resultError("group_id is required for 'get_variable_group' action")
+			}
+			group, err := c.GetVariableGroup(input.ProjectKey, input.GroupID)
+			if err != nil {
+				return resultError(fmt.Sprintf("getting variable group: %v", err))
+			}
+			return resultJSON(group)
+		case "list_environments":
+			envs, err := c.ListEnvironments(input.ProjectKey)
+			if err != nil {
+				return resultError(fmt.Sprintf("listing environments: %v", err))
+			}
+			return resultJSON(envs)
 		default:
 			return resultError(fmt.Sprintf("unknown action: %s", input.Action))
 		}

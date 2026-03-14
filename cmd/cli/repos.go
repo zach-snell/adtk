@@ -140,9 +140,55 @@ var reposCommitsCmd = &cobra.Command{
 	},
 }
 
+var reposPoliciesCmd = &cobra.Command{
+	Use:   "policies <repo>",
+	Short: "List branch policies for a repository",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		policies, err := c.ListBranchPolicies(project, args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintJSON(policies)
+	},
+}
+
+var reposTagsCmd = &cobra.Command{
+	Use:   "tags <repo>",
+	Short: "List tags in a repository",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		tags, err := c.ListTags(project, args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, tags, func() {
+			t := NewTable()
+			t.Header("Name", "Object ID")
+			for _, tag := range tags {
+				name, _ := tag["name"].(string)
+				oid, _ := tag["objectId"].(string)
+				short := oid
+				if len(short) > 12 {
+					short = short[:12]
+				}
+				t.Row(name, short)
+			}
+			t.Flush()
+			fmt.Printf("\n%d tags\n", len(tags))
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(reposCmd)
-	reposCmd.AddCommand(reposListCmd, reposGetCmd, reposBranchesCmd, reposTreeCmd, reposCommitsCmd)
+	reposCmd.AddCommand(reposListCmd, reposGetCmd, reposBranchesCmd, reposTreeCmd, reposCommitsCmd, reposPoliciesCmd, reposTagsCmd)
 
 	reposCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 

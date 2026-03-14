@@ -10,7 +10,7 @@ import (
 
 // ManageReposInput defines the input schema for the manage_repos tool.
 type ManageReposInput struct {
-	Action       string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_branches', 'get_file', 'get_tree', 'create_branch', 'search_commits'"`
+	Action       string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'list_branches', 'get_file', 'get_tree', 'create_branch', 'search_commits', 'list_policies', 'list_tags', 'create_tag'"`
 	ProjectKey   string `json:"project_key,omitempty" jsonschema:"Project name (required for most actions)"`
 	RepoID       string `json:"repo_id,omitempty" jsonschema:"Repository name or ID (required for get, list_branches, get_file, get_tree)"`
 	FilePath     string `json:"file_path,omitempty" jsonschema:"File path within the repo (for get_file, get_tree)"`
@@ -20,6 +20,8 @@ type ManageReposInput struct {
 	Author       string `json:"author,omitempty" jsonschema:"Filter commits by author (for search_commits)"`
 	FromDate     string `json:"from_date,omitempty" jsonschema:"Filter commits from this date (for search_commits)"`
 	ToDate       string `json:"to_date,omitempty" jsonschema:"Filter commits to this date (for search_commits)"`
+	TagName      string `json:"tag_name,omitempty" jsonschema:"Tag name (required for create_tag)"`
+	CommitSHA    string `json:"commit_sha,omitempty" jsonschema:"Commit SHA to tag (required for create_tag)"`
 }
 
 // ManageReposHandler returns the handler for the manage_repos tool.
@@ -40,6 +42,12 @@ func ManageReposHandler(c *devops.Client, enableWrites bool) func(context.Contex
 			return handleRepoCreateBranch(c, input, enableWrites)
 		case "search_commits":
 			return handleRepoSearchCommits(c, input)
+		case "list_policies":
+			return handleRepoListPolicies(c, input)
+		case "list_tags":
+			return handleRepoListTags(c, input)
+		case "create_tag":
+			return handleRepoCreateTag(c, input, enableWrites)
 		default:
 			return resultError(fmt.Sprintf("unknown action: %s", input.Action))
 		}
@@ -137,4 +145,36 @@ func handleRepoSearchCommits(c *devops.Client, input ManageReposInput) (*sdkmcp.
 		return resultError(fmt.Sprintf("searching commits: %v", err))
 	}
 	return resultJSON(commits)
+}
+
+func handleRepoListPolicies(c *devops.Client, input ManageReposInput) (*sdkmcp.CallToolResult, any, error) {
+	policies, err := c.ListBranchPolicies(input.ProjectKey, input.RepoID)
+	if err != nil {
+		return resultError(fmt.Sprintf("listing policies: %v", err))
+	}
+	return resultJSON(policies)
+}
+
+func handleRepoListTags(c *devops.Client, input ManageReposInput) (*sdkmcp.CallToolResult, any, error) {
+	if input.RepoID == "" {
+		return resultError("repo_id is required for 'list_tags' action")
+	}
+	tags, err := c.ListTags(input.ProjectKey, input.RepoID)
+	if err != nil {
+		return resultError(fmt.Sprintf("listing tags: %v", err))
+	}
+	return resultJSON(tags)
+}
+
+func handleRepoCreateTag(c *devops.Client, input ManageReposInput, enableWrites bool) (*sdkmcp.CallToolResult, any, error) {
+	if !enableWrites {
+		return resultError("create_tag action requires ADTK_ENABLE_WRITES=true")
+	}
+	if input.RepoID == "" || input.TagName == "" || input.CommitSHA == "" {
+		return resultError("repo_id, tag_name, and commit_sha are required for 'create_tag' action")
+	}
+	if err := c.CreateTag(input.ProjectKey, input.RepoID, input.TagName, input.CommitSHA); err != nil {
+		return resultError(fmt.Sprintf("creating tag: %v", err))
+	}
+	return resultText(fmt.Sprintf("Tag %q created at %s", input.TagName, input.CommitSHA))
 }

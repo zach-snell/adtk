@@ -130,9 +130,93 @@ var pipelinesDefinitionsCmd = &cobra.Command{
 	},
 }
 
+var pipelinesVarGroupsCmd = &cobra.Command{
+	Use:   "var-groups",
+	Short: "List variable groups in a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		groups, err := c.ListVariableGroups(project)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, groups, func() {
+			t := NewTable()
+			t.Header("ID", "Name", "Description")
+			for _, g := range groups {
+				id := fmt.Sprintf("%v", g["id"])
+				name, _ := g["name"].(string)
+				desc, _ := g["description"].(string)
+				t.Row(id, name, Truncate(desc, 50))
+			}
+			t.Flush()
+			fmt.Printf("\n%d variable groups\n", len(groups))
+		})
+	},
+}
+
+var pipelinesVarGroupGetCmd = &cobra.Command{
+	Use:   "var-group <id>",
+	Short: "Get a variable group by ID",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "invalid group ID: %s\n", args[0])
+			os.Exit(1)
+		}
+		group, err := c.GetVariableGroup(project, id)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintJSON(group)
+	},
+}
+
+var pipelinesEnvironmentsCmd = &cobra.Command{
+	Use:   "environments",
+	Short: "List deployment environments in a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		if project == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		envs, err := c.ListEnvironments(project)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, envs, func() {
+			t := NewTable()
+			t.Header("ID", "Name")
+			for _, e := range envs {
+				id := fmt.Sprintf("%v", e["id"])
+				name, _ := e["name"].(string)
+				t.Row(id, name)
+			}
+			t.Flush()
+			fmt.Printf("\n%d environments\n", len(envs))
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(pipelinesCmd)
-	pipelinesCmd.AddCommand(pipelinesListCmd, pipelinesGetCmd, pipelinesRunsCmd, pipelinesDefinitionsCmd)
+	pipelinesCmd.AddCommand(pipelinesListCmd, pipelinesGetCmd, pipelinesRunsCmd, pipelinesDefinitionsCmd, pipelinesVarGroupsCmd, pipelinesVarGroupGetCmd, pipelinesEnvironmentsCmd)
 
 	pipelinesCmd.PersistentFlags().StringP("project", "p", "", "Project name (required)")
 	pipelinesCmd.PersistentFlags().Int("top", 25, "Max results to return")

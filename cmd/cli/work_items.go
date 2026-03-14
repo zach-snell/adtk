@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+	"github.com/zach-snell/adtk/internal/devops"
 )
 
 var workItemsCmd = &cobra.Command{
@@ -15,14 +16,18 @@ var workItemsCmd = &cobra.Command{
 }
 
 var wiGetCmd = &cobra.Command{
-	Use:   "get <id>",
-	Short: "Get a work item by ID",
-	Args:  cobra.ExactArgs(1),
+	Use:   "get [id]",
+	Short: "Get a work item by ID (auto-detects from git branch if omitted)",
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		id, err := strconv.Atoi(args[0])
+		arg := ""
+		if len(args) > 0 {
+			arg = args[0]
+		}
+		id, err := devops.DetectWorkItemIDOrArg(arg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "invalid work item ID: %s\n", args[0])
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 		project, _ := cmd.Flags().GetString("project")
@@ -163,9 +168,47 @@ var wiCommentsCmd = &cobra.Command{
 	},
 }
 
+var wiMetricsCmd = &cobra.Command{
+	Use:   "metrics <id>",
+	Short: "Show lifecycle metrics for a work item",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		id, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "invalid work item ID: %s\n", args[0])
+			os.Exit(1)
+		}
+		project, _ := cmd.Flags().GetString("project")
+		metrics, err := c.ComputeWorkItemMetrics(project, id)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, metrics, func() {
+			KV("Current Status", metrics.CurrentStatus)
+			KV("Cycle Time", metrics.CycleTime.String())
+			KV("Lead Time", metrics.LeadTime.String())
+			fmt.Println("\n  Time in Status:")
+			for status, d := range metrics.TimeInStatus {
+				KV("  "+status, d.String())
+			}
+			if len(metrics.StatusTransitions) > 0 {
+				fmt.Println("\n  Status Transitions:")
+				t := NewTable()
+				t.Header("From", "To", "At")
+				for _, tr := range metrics.StatusTransitions {
+					t.Row(tr.From, tr.To, tr.At.Format("2006-01-02 15:04"))
+				}
+				t.Flush()
+			}
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(workItemsCmd)
-	workItemsCmd.AddCommand(wiGetCmd, wiListCmd, wiTypesCmd, wiMyCmd, wiCommentsCmd)
+	workItemsCmd.AddCommand(wiGetCmd, wiListCmd, wiTypesCmd, wiMyCmd, wiCommentsCmd, wiMetricsCmd)
 
 	workItemsCmd.PersistentFlags().StringP("project", "p", "", "Project name")
 

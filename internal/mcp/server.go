@@ -26,6 +26,7 @@ func newServer(client *devops.Client) *mcp.Server {
 	)
 
 	registerTools(s, client)
+	registerPrompts(s)
 	return s
 }
 
@@ -77,13 +78,13 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 	// ─── Search ─────────────────────────────────────────────────────
 	addTool(s, disabled, mcp.Tool{
 		Name:        "manage_search",
-		Description: "Search Azure DevOps using WIQL, code search, work item search, or wiki search. Actions: 'wiql', 'code', 'work_items', 'wiki'",
+		Description: "Search Azure DevOps using WIQL, code search, work item search, or wiki search. Actions: 'wiql', 'code', 'work_items', 'wiki', 'get_query', 'run_query'",
 	}, ManageSearchHandler(c))
 
 	// ─── Repositories ───────────────────────────────────────────────
-	repoActions := "'list', 'get', 'list_branches', 'get_file', 'get_tree', 'search_commits'"
+	repoActions := "'list', 'get', 'list_branches', 'get_file', 'get_tree', 'search_commits', 'list_policies', 'list_tags'"
 	if enableWrites {
-		repoActions += ", 'create_branch'"
+		repoActions += ", 'create_branch', 'create_tag'"
 	}
 	addTool(s, disabled, mcp.Tool{
 		Name:        "manage_repos",
@@ -127,7 +128,7 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 	}, ManageWikiHandler(c, enableWrites))
 
 	// ─── Pipelines ──────────────────────────────────────────────────
-	pipelineActions := "'list', 'get', 'list_runs', 'get_run', 'get_logs', 'get_log', 'get_build_changes', 'list_definitions'"
+	pipelineActions := "'list', 'get', 'list_runs', 'get_run', 'get_logs', 'get_log', 'get_build_changes', 'list_definitions', 'list_variable_groups', 'get_variable_group', 'list_environments'"
 	if enableWrites {
 		pipelineActions += ", 'trigger'"
 	}
@@ -151,6 +152,12 @@ func registerTools(s *mcp.Server, c *devops.Client) {
 		Name:        "manage_advanced_security",
 		Description: "Manage Azure DevOps Advanced Security alerts. Actions: 'list_alerts', 'get_alert'",
 	}, ManageAdvancedSecurityHandler(c))
+
+	// ─── Metrics ────────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_metrics",
+		Description: "Get issue lifecycle metrics for dashboards and visualizations. Actions: 'get_metrics'",
+	}, ManageMetricsHandler(c))
 
 	// ─── Attachments ────────────────────────────────────────────────
 	attachmentActions := "'list', 'download'"

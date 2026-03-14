@@ -102,6 +102,56 @@ func (c *Client) GetBuildChanges(project string, buildID int) ([]map[string]inte
 	return resp.Value, nil
 }
 
+// ListVariableGroups lists variable groups in a project.
+// GET /{project}/_apis/distributedtask/variablegroups?api-version=7.1
+func (c *Client) ListVariableGroups(project string) ([]map[string]interface{}, error) {
+	data, err := c.Get(project, "/distributedtask/variablegroups", nil)
+	if err != nil {
+		return nil, fmt.Errorf("listing variable groups: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling variable groups: %w", err)
+	}
+	return resp.Value, nil
+}
+
+// GetVariableGroup gets a specific variable group by ID.
+// GET /{project}/_apis/distributedtask/variablegroups/{groupId}?api-version=7.1
+func (c *Client) GetVariableGroup(project string, groupID int) (map[string]interface{}, error) {
+	path := fmt.Sprintf("/distributedtask/variablegroups/%d", groupID)
+	data, err := c.Get(project, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting variable group: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling variable group: %w", err)
+	}
+	return result, nil
+}
+
+// ListEnvironments lists deployment environments in a project.
+// GET /{project}/_apis/pipelines/environments?api-version=7.1
+func (c *Client) ListEnvironments(project string) ([]map[string]interface{}, error) {
+	data, err := c.Get(project, "/pipelines/environments", nil)
+	if err != nil {
+		return nil, fmt.Errorf("listing environments: %w", err)
+	}
+
+	var resp struct {
+		Value []map[string]interface{} `json:"value"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("unmarshaling environments: %w", err)
+	}
+	return resp.Value, nil
+}
+
 // ListBuildDefinitions lists pipeline/build definitions in a project.
 // GET /{project}/_apis/build/definitions?api-version=7.1
 func (c *Client) ListBuildDefinitions(project string) ([]map[string]interface{}, error) {

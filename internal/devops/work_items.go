@@ -360,6 +360,67 @@ func (c *Client) UpdateWorkItemComment(project string, workItemID, commentID int
 	return &result, nil
 }
 
+// GetQuery gets a saved query by ID or path.
+// GET /{project}/_apis/wit/queries/{queryIdOrPath}?api-version=7.1&$depth=1
+func (c *Client) GetQuery(project, queryIDOrPath string) (map[string]interface{}, error) {
+	path := fmt.Sprintf("/wit/queries/%s", url.PathEscape(queryIDOrPath))
+	query := url.Values{}
+	query.Set("$depth", "1")
+
+	data, err := c.Get(project, path, query)
+	if err != nil {
+		return nil, fmt.Errorf("getting query: %w", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling query: %w", err)
+	}
+	return result, nil
+}
+
+// RunQueryByID executes a saved query and returns work items.
+// POST /{project}/_apis/wit/wiql/{id}?api-version=7.1
+// It uses the 2-step pattern: run the query for IDs, then batch-fetch.
+func (c *Client) RunQueryByID(project, queryID string, top int) ([]WorkItem, error) {
+	path := fmt.Sprintf("/wit/wiql/%s", queryID)
+	q := url.Values{}
+	if top > 0 {
+		q.Set("$top", fmt.Sprintf("%d", top))
+	}
+
+	requestURL := c.buildURL(HostMain, project, path, q)
+	resp, err := c.do("POST", requestURL, nil, "application/json")
+	if err != nil {
+		return nil, fmt.Errorf("running saved query: %w", err)
+	}
+	defer resp.Body.Close()
+
+	buf, err := readBody(resp)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode >= 400 {
+		return nil, parseAPIError(resp.StatusCode, buf)
+	}
+
+	var result WIQLResult
+	if err := json.Unmarshal(buf, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling query result: %w", err)
+	}
+
+	if len(result.WorkItems) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int, len(result.WorkItems))
+	for i, wi := range result.WorkItems {
+		ids[i] = wi.ID
+	}
+
+	return c.GetWorkItemsBatch(project, ids, nil)
+}
+
 // BuildJSONPatchOps constructs JSON Patch operations from a map of field names to values.
 // Field names are automatically prefixed with "/fields/System." if they don't start with "/".
 func BuildJSONPatchOps(fields map[string]interface{}) []JSONPatchOp {

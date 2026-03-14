@@ -96,9 +96,37 @@ var searchWiqlCmd = &cobra.Command{
 	},
 }
 
+var searchQueryCmd = &cobra.Command{
+	Use:   "query <id>",
+	Short: "Run a saved query by ID or path",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		c := getClient()
+		project, _ := cmd.Flags().GetString("project")
+		top, _ := cmd.Flags().GetInt("top")
+		items, err := c.RunQueryByID(project, args[0], top)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, items, func() {
+			t := NewTable()
+			t.Header("ID", "Type", "Title", "State")
+			for _, wi := range items {
+				wiType := fieldStr(wi.Fields, "System.WorkItemType")
+				title := fieldStr(wi.Fields, "System.Title")
+				state := fieldStr(wi.Fields, "System.State")
+				t.Row(fmt.Sprintf("%d", wi.ID), wiType, Truncate(title, 50), state)
+			}
+			t.Flush()
+			fmt.Printf("\n%d work items\n", len(items))
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(searchCmd)
-	searchCmd.AddCommand(searchCodeCmd, searchWICmd, searchWiqlCmd)
+	searchCmd.AddCommand(searchCodeCmd, searchWICmd, searchWiqlCmd, searchQueryCmd)
 
 	searchCmd.PersistentFlags().StringP("project", "p", "", "Project name (optional, scopes search)")
 	searchCmd.PersistentFlags().Int("top", 25, "Max results to return")
