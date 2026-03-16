@@ -13,7 +13,10 @@ import (
 	mcpserver "github.com/zach-snell/adtk/internal/mcp"
 )
 
-var port int
+var (
+	port   int
+	noAuth bool
+)
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
@@ -29,18 +32,25 @@ run it using the HTTP Streamable transport.`,
 func init() {
 	RootCmd.AddCommand(mcpCmd)
 	mcpCmd.Flags().IntVarP(&port, "port", "p", 0, "Port to listen on for HTTP Streamable transport")
+	mcpCmd.Flags().BoolVar(&noAuth, "no-auth", false, "Start server without authentication (tools will return auth-required errors when called)")
 }
 
 func runServer() {
-	creds, err := devops.LoadCredentials()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
-		fmt.Fprintf(os.Stderr, "  1. Run: adtk auth\n")
-		fmt.Fprintf(os.Stderr, "  2. Set AZURE_DEVOPS_ORG + AZURE_DEVOPS_PAT env vars\n")
-		os.Exit(1)
-	}
+	var s *mcp.Server
 
-	s := mcpserver.New(creds.Organization, creds.PAT)
+	if noAuth {
+		s = mcpserver.NewUnauthenticated()
+	} else {
+		creds, err := devops.LoadCredentials()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
+			fmt.Fprintf(os.Stderr, "  1. Run: adtk auth\n")
+			fmt.Fprintf(os.Stderr, "  2. Set AZURE_DEVOPS_ORG + AZURE_DEVOPS_PAT env vars\n")
+			os.Exit(1)
+		}
+
+		s = mcpserver.New(creds.Organization, creds.PAT)
+	}
 
 	if port != 0 {
 		fmt.Printf("Starting Azure DevOps MCP Server on :%d (HTTP Streamable)\n", port)
