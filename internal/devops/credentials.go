@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -155,19 +154,8 @@ func InteractiveLogin() error {
 
 	fmt.Println("\nVerifying credentials...")
 
-	// Verify by hitting the connection data endpoint
-	tmpClient := NewClient(org, pat)
-	resp, err := tmpClient.do(http.MethodGet, fmt.Sprintf("https://%s/%s/_apis/connectionData?api-version=%s", HostMain, org, DefaultAPIVersion), nil, "")
-	if err != nil {
-		return fmt.Errorf("credential verification failed: %w", err)
-	}
-	resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("authentication failed: invalid PAT or organization")
-	}
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("authentication failed with status %d", resp.StatusCode)
+	if err := VerifyPAT(org, pat); err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
 	}
 
 	fmt.Println("Credentials verified successfully!")
